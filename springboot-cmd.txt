@@ -1,0 +1,28 @@
+clean package -Dmaven.test.skip=true 
+mvn spring-boot:run
+
+
+mvn clean package -Dmaven.test.skip=true
+
+mvn clean compile install -Dmaven.test.skip=true
+
+
+
+
+deploy  -Dmaven.test.skip=true
+
+
+
+INFO] --- maven-jar-plugin:2.6:jar (default-jar) @ lotteryPay ---
+[INFO] Building jar: C:\WorkSpaces\IntelliJ IDEA\Pay\lotteryPay\target\lottery-pay-core.jar
+
+
+
+[INFO] --- maven-jar-plugin:2.6:jar (default-jar) @ lotteryPay ---
+[INFO] Building jar: C:\WorkSpaces\IntelliJ IDEA\Pay\lotteryPay\target\lottery-pay-core.jar
+
+
+
+
+
+java -jar lotteryPay-1.0.jar --spring.profiles.active=prod

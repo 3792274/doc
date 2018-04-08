@@ -1,0 +1,234 @@
+http://mycat.io/
+https://github.com/MyCATApache/Mycat-Server
+
+------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+1.下载
+http://dl.mycat.io/1.6.5/Mycat-server-1.6.5-release-20180122220033-linux.tar.gz
+http://dl.mycat.io/1.6.5/Mycat-server-1.6.5-release-20180122220033-win.tar.gz
+
+2.安装mysql。
+3.建立文件
+	1.C:\Users\tony\Desktop\MyCat\mycatDocker\mycat\Dockerfile    
+	2.C:\Users\tony\Desktop\MyCat\mycatDocker\mycat\Mycat-server-1.6.5-release-20180122220033-linux.tar.gz
+	3.解压Mycat-server-1.6.5-release-20180122220033-linux.tar.gz ----->D:/DockerData/mycat-8066/conf/ 和 D:/DockerData/mycat-8066/logs/
+
+>vim Dockerfile
+FROM java:8-jre
+MAINTAINER <tony tony@ddg.com>
+LABEL Description="mycat"
+ENV mycat-version Mycat-server-1.6.5-release-20180122220033-linux.tar.gz
+USER root
+COPY ./Mycat-server-1.6.5-release-20180122220033-linux.tar.gz /
+RUN tar -zxf /Mycat-server-1.6.5-release-20180122220033-linux.tar.gz
+ENV MYCAT_HOME=/mycat
+ENV PATH=$PATH:$MYCAT_HOME/bin
+WORKDIR $MYCAT_HOME/bin
+RUN chmod u+x ./mycat
+EXPOSE 8066 9066
+CMD ["./mycat","console"]
+
+
+4.建立编排文件
+   1.C:\Users\tony\Desktop\MyCat\mycatDocker\docker-compose.yml
+>vim docker-compose.yml
+version: '2'
+services:
+  mycat:
+    build: ./mycat
+    container_name: mycat
+    volumes:
+      - D:/DockerData/mycat-8066/conf/:/mycat/conf/:ro
+      - D:/DockerData/mycat-8066/logs/:/mycat/logs/:rw
+    ports:
+      - "8066:8066"
+      - "9066:9066"
+    networks:
+      mycat:
+        ipv4_address: 172.19.0.10
+    ulimits:
+      nproc: 65535
+    hostname: mycat
+    mem_limit: 1024m
+    restart: always
+networks:
+  mycat:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.19.0.0/24
+        gateway: 172.19.0.1
+
+ 5.编辑mycat 配置
+ 1.D:\DockerData\mycat-8066\conf\schema.xml       
+ 2.D:\DockerData\mycat-8066\conf\server.xml
+
+
+ 6.启动
+ C:\Users\tony\Desktop\MyCat\mycatDocker> docker-compose down  &&    docker-compose up -d  
+
+ 7.防火墙
+ firewall-cmd --zone=public --add-port=8066/tcp --permanent  && firewall-cmd --zone=public --add-port=9066/tcp --permanent && firewall-cmd --reload
+
+------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+Centos 安装
+
+1.创建Dockerfile配置文件：mkdir -p /opt/mycat/mycatDocker && vim /opt/mycat/mycatDocker/Dockerfile  
+FROM java:8-jre
+MAINTAINER <tony tony@ddg.com>
+LABEL Description="mycat"
+ENV mycat-version Mycat-server-1.6.5-release-20180122220033-linux.tar.gz
+USER root
+COPY ./Mycat-server-1.6.5-release-20180122220033-linux.tar.gz /
+RUN tar -zxf /Mycat-server-1.6.5-release-20180122220033-linux.tar.gz
+ENV MYCAT_HOME=/mycat
+ENV PATH=$PATH:$MYCAT_HOME/bin
+WORKDIR $MYCAT_HOME/bin
+RUN chmod u+x ./mycat
+EXPOSE 8066 9066
+CMD ["./mycat","console"]
+
+
+2.下载mycat： cd /opt/mycat/mycatDocker && wget http://dl.mycat.io/1.6.5/Mycat-server-1.6.5-release-20180122220033-linux.tar.gz
+3.创建编排文件：  vim /opt/mycat/docker-compose.yml
+version: '2'
+services:
+  mycat:
+    build: ./mycatDocker
+    container_name: mycat
+    volumes:
+      - /opt/mycat/mycat-8066/conf/:/mycat/conf/:ro
+      - /opt/mycat/mycat-8066/logs/:/mycat/logs/:rw
+    ports:
+      - "8066:8066"
+      - "9066:9066"
+    networks:
+      mycat:
+        ipv4_address: 172.19.0.10
+    ulimits:
+      nproc: 65535
+    hostname: mycat
+    mem_limit: 1024m
+    restart: always
+networks:
+  mycat:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.19.0.0/24
+        gateway: 172.19.0.1
+
+4.解压mycat 配置文件
+mkdir -p /opt/mycat/mycat-8066/ && cd  /opt/mycat/mycatDocker   &&   tar -zxf Mycat-server-1.6.5-release-20180122220033-linux.tar.gz  && mv mycat/conf/ mycat/logs/  /opt/mycat/mycat-8066/ && rm -rf mycat
+
+
+
+5.修改配置
+ 一、 cp /opt/mycat/mycat-8066/conf/server.xml /opt/mycat/mycat-8066/conf/server.xml.bak && vim /opt/mycat/mycat-8066/conf/server.xml
+      本地时间戳方式： sequnceHandlerType=2 useGlobleTableCheck=0  useOffHeapForMerge=0   
+      #ID= 64 位二进制 (42(毫秒)+5(机器 ID)+5(业务编码)+12(重复累加)   select last_insert_id() // SELECT next value for MYCATSEQ_GLOBAL;
+
+ 二、 cp /opt/mycat/mycat-8066/conf/schema.xml /opt/mycat/mycat-8066/conf/schema.xml.bak && rm -rf /opt/mycat/mycat-8066/conf/schema.xml && vim /opt/mycat/mycat-8066/conf/schema.xml
+
+<?xml version="1.0"?>
+<!DOCTYPE mycat:schema SYSTEM "schema.dtd">
+<mycat:schema xmlns:mycat="http://io.mycat/">
+        <schema name="lottery_pay" checkSQLschema="false">
+
+                <!-- 全局表,自增长主键 -->
+                <table name="bill"                type="global"   primaryKey="id" autoIncrement="true" dataNode="dn1" />
+                <table name="start_info"          type="global"   primaryKey="id" autoIncrement="true" dataNode="dn1" />
+                <table name="req_pay_list"        type="global"   primaryKey="id" autoIncrement="true" dataNode="dn1"/>
+                <table name="res_pay_list"        type="global"   primaryKey="id" autoIncrement="true" dataNode="dn1" />
+                <table name="tj_by_day"           type="global"   primaryKey="id" autoIncrement="true" dataNode="dn1"/>
+                <table name="tj_status"           type="global"   primaryKey="id" autoIncrement="true" dataNode="dn1"/>
+                <table name="permission"          type="global"   primaryKey="id" autoIncrement="true" dataNode="dn1"/>
+                <table name="role"                type="global"   primaryKey="id" autoIncrement="true" dataNode="dn1"/>
+                <table name="role_permission"     type="global"   primaryKey="id" autoIncrement="true" dataNode="dn1"/>
+                <table name="user"                type="global"   primaryKey="id" autoIncrement="true" dataNode="dn1"/>
+                <table name="user_role"           type="global"   primaryKey="id" autoIncrement="true" dataNode="dn1"/>
+
+                <!--枚举分片 
+                <table name="req_pay_list" primaryKey="id" autoIncrement="true" dataNode="dn$1-2" rule="sharding-by-intfile" />
+                <table name="res_pay_list" primaryKey="id" autoIncrement="true" dataNode="dn$1-2" rule="sharding-by-intfile" />
+                <table name="tj_by_day"    primaryKey="id" autoIncrement="true" dataNode="dn$1-2" rule="sharding-by-intfile" />
+                <table name="tj_status"    primaryKey="id" autoIncrement="true" dataNode="dn$1-2" rule="sharding-by-intfile" />
+                 -->
+
+                <!-- E-R关系分片，多表
+                        <table name="user" primaryKey="id" dataNode="dn1,dn2" rule="mod-long-test">
+                        <childTable name="cell" joinKey="user_id" parentKey="id"/>
+                        <childTable name="note" joinKey="user_id" parentKey="id"/>
+                        <childTable name="lit" joinKey="user_id" parentKey="id"/>
+                        <childTable name="lit_usr" joinKey="user_id" parentKey="id"/>
+                </table>
+                -->
+        </schema>
+
+        <dataNode name="dn1" dataHost="dh1" database="lottery_pay" />
+
+        <!--
+             其中，balance指的负载均衡类型，目前的取值有4种：
+          1. balance="0", 不开启读写分离机制，所有读操作都发送到当前可用的writeHost上。
+          2. balance="1"，全部的readHost与stand by writeHost参与select语句的负载均衡，简单的说，当双主双从模式(M1->S1，M2->S2，并且M1与 M2互为主备)，正常情况下，M2,S1,S2都参与select语句的负载均衡。
+          3. balance="2"，所有读操作都随机的在writeHost、readhost上分发。
+          4. balance="3"，所有读请求随机的分发到wiriterHost对应的readhost执行，writerHost不负担读压力
+
+             switchType指的是切换的模式，目前的取值也有4种：
+          1. switchType='-1' 表示不自动切换
+          2. switchType='1' 默认值，表示自动切换
+          3. switchType='2' 基于MySQL主从同步的状态决定是否切换,心跳语句为 show slave status || select user()
+          4. switchType='3'基于MySQL galary cluster的切换机制（适合集群）（1.4.1），心跳语句为 show status like 'wsrep%'。
+        -->  
+        <dataHost name="dh1" maxCon="1000" minCon="200" balance="1"   writeType="0" dbType="mysql" dbDriver="native" switchType="2"  slaveThreshold="1800">
+                <heartbeat>show slave status</heartbeat>
+                <writeHost host="wh1" url="172.28.240.38:3306" user="root" password="12369">
+                        <readHost host="rh1" url="172.28.240.38:3307" user="root" password="12369" />
+                </writeHost>
+        </dataHost>
+</mycat:schema>
+
+
+         
+
+ 三、 cp /opt/mycat/mycat-8066/conf/sequence_time_conf.properties  /opt/mycat/mycat-8066/conf/sequence_time_conf.properties.bak && vim /opt/mycat/mycat-8066/conf/sequence_time_conf.properties
+        WORKID=0-31 任意整数
+        DATAACENTERID=0-31 任意整数
+
+四、  cp /opt/mycat/mycat-8066/conf/rule.xml /opt/mycat/mycat-8066/conf/rule.xml.bak && vim /opt/mycat/mycat-8066/conf/rule.xml    --->  hash-int 列名
+ 
+五、增加分片配置
+    vim  /opt/mycat/mycat-8066/conf/partition-hash-int.txt
+     100=0
+     200=0
+     300=0
+     66=0
+     99=0
+     699=0
+ 
+
+
+6.启动   
+firewall-cmd --zone=public --add-port=8066/tcp --permanent  && firewall-cmd --zone=public --add-port=9066/tcp --permanent && firewall-cmd --reload
+docker-compose down  &&  rm -rf /opt/mycat/mycat-8066/logs/*  &&  docker-compose up -d  (docker network prune )
+
+
+7.日志配置
+vim /opt/mycat/mycat-8066/conf/
+<Loggers>
+        <AsyncLogger name="io.mycat.sqlengine.SQLJob" level="info" includeLocation="true" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
+        </AsyncLogger>
+        <AsyncLogger name="io.mycat.backend.datasource.PhysicalDatasource" level="info" includeLocation="true" additivity="false">
+                <AppenderRef ref="Console"/>
+                <AppenderRef ref="RollingFile"/>
+        </AsyncLogger>
+        <asyncRoot level="debug" includeLocation="true">
+            <!--<AppenderRef ref="Console" />-->
+            <AppenderRef ref="RollingFile"/>
+        </asyncRoot>
+  </Loggers>

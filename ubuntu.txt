@@ -1,0 +1,46 @@
+sudo apt-get update
+sudo apt-get upgrade
+---------------------------------------------------------------------------------------------------------------------------------------
+1.更改ip
+vim /etc/network/interfaces
+
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+auto eth0
+iface eth0 inet static
+address 10.20.1.21
+netmask 255.255.255.0
+gateway 10.20.1.1
+------------------------------------
+vim /etc/resolv.conf
+vim /etc/resolvconf/resolv.conf.d/base
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+
+/etc/NetworkManager/目录下的system-connections删除
+------------------------------------
+sudo /etc/init.d/networking restart
+------------------------------------------------------------------------------------------------------------------------------------------
+
+2.ssh
+apt-get install gufw  
+ufw status  
+apt-get install openssh-server 
+sudo ps -e |grep ssh
+netstat -nltp 或者 ps -ef | grep sshd  
+ufw allow 22 
+service ssh start
+vim /etc/ssh/sshd_config
+#PermitRootLogin without-password
+PermitRootLogin yes
+sudo ifconfig
+service ssh restart 
+

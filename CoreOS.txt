@@ -1,0 +1,19 @@
+1.下载
+http://stable.release.core-os.net/amd64-usr/current/coreos_production_iso_image.iso
+
+2.配置SSH的过程
+cd /etc/ssh
+mv sshd_config{,.bak}  #你不能直接编辑，因为这个文件是/usr/share/ssh/ssh_config的软链接，而/usr的整个分区，是只读的
+cat sshd_config.bak > sshd_config
+vim sshd_config
+#...
+PermitRootLogin yes  #加入这一句
+systemctl restart sshd
+sudo passwd root
+ 
+
+
+
+ http://wiselyman.iteye.com/blog/2152204
+ http://download.csdn.net/download/itanger/9943160?web=web
+ http://download.csdn.net/download/lilinminglvshan/9938074

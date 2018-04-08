@@ -1,0 +1,8 @@
+https://prometheus.io/docs/introduction/install/
+https://hub.docker.com/r/prom/prometheus/tags/
+
+docker run -p 9090:9090 prom/prometheus:v1.7.1
+
+docker run -p 9090:9090 -v /tmp/prometheus.yml:/etc/prometheus/prometheus.yml   prom/prometheus:v1.7.1
+
+docker run -p 9090:9090 -v /prometheus-data prom/prometheus -config.file=/prometheus-data/prometheus.yml   prom/prometheus:v1.7.1

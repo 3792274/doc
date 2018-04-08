@@ -1,0 +1,135 @@
+redis 管理工具
+https://redisdesktop.com/download
+
+安装说明
+https://segmentfault.com/a/1190000009247586
+
+官方 
+https://hub.docker.com/_/redis/
+https://redis.io
+
+
+> mkdir -p /opt/redis/conf/ &&  vim /opt/redis/conf/redis.conf
+requirepass 12369
+
+docker pull  redis:4.0  
+docker run  -d  --name  redis  -v /opt/redis/dir:/data  -p 6379:6379 redis:4.0   redis-server --appendonly yes
+docker run  -d  --name  redis  -v /opt/redis/conf/redis.conf:/usr/local/etc/redis/redis.conf  -p 6379:6379  redis:4.0  redis-server /usr/local/etc/redis/redis.conf
+
+
+-------------------------------------------------------------------------------------------------------
+1.创建redis配置文件
+mkdir -p /opt/redis/redis-6379/conf/ &&  vim /opt/redis/redis-6379/conf/redis.conf
+mkdir -p /opt/redis/redis-6380/conf/ &&  vim /opt/redis/redis-6380/conf/redis.conf
+requirepass 12369
+
+
+2.创建编排文件： vim /opt/redis/docker-compose.yml
+
+version: '2'
+services:
+
+  redis6379:
+    image: redis:4.0
+    container_name: redis6379
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - /opt/redis/redis-6379/conf/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - /opt/redis/redis-6379/data:/data:rw
+      - /etc/localtime:/etc/localtime:rw
+      - /etc/hosts:/etc/hosts:ro
+    ports:
+      - "6379:6379"
+    networks:
+      redis:
+        ipv4_address: 172.18.3.2
+    ulimits:
+      nproc: 65535
+    hostname: redis6379
+    mem_limit: 1024m
+    restart: always
+
+  redis6380:
+    image: redis:4.0
+    container_name: redis6380
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - /opt/redis/redis-6380/conf/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - /opt/redis/redis-6380/data:/data:rw
+      - /etc/localtime:/etc/localtime:rw
+      - /etc/hosts:/etc/hosts:ro
+    ports:
+      - "6380:6379"
+    networks:
+      redis:
+        ipv4_address: 172.18.3.3
+    ulimits:
+      nproc: 65535
+    hostname: redis6380
+    mem_limit: 1024m
+    restart: always
+
+
+networks:
+  redis:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.18.3.0/24
+        gateway: 172.18.3.1
+
+
+3.启动   
+firewall-cmd --zone=public --add-port=6379/tcp --permanent  && firewall-cmd --zone=public --add-port=6380/tcp --permanent && firewall-cmd --reload
+docker-compose down  &&    docker-compose up -d  (docker network prune )        
+
+-------------------------------------------------------------------------------------------------------
+StringRedisTemplate api 使用说明 https://www.jianshu.com/p/7bf5dc61ca06
+
+Redis的项目名是Remote Dictionary Server的缩写，但它常被称作是一款数据结构服务器（data structureserver）。
+ 
+String  可以是字符串、整数或者浮点数
+list    一个链表，链表上的每个节点都包含了一个字符串
+Set    包含字符串的无序收集器(unorderedcollection)，并且被包含的每个字符串都是独一无二的、各不相同
+Hash   包含键值对的无序散列表
+Zset   字符串成员(member)与浮点数分值(score)之间的有序映射，元素的排列顺序由分值的大小决定
+
+redisTemplate.opsForValue();//操作字符串
+redisTemplate.opsForHash();//操作hash
+redisTemplate.opsForList();//操作list
+redisTemplate.opsForSet();//操作有序sett
+redisTemplate.opsForZSet();//操作有序set
+
+使用：redisTemplate.opsForValue().set("name","tom");
+结果：redisTemplate.opsForValue().get("name")  输出结果为tom
+
+
+ ------------------------------------------------------
+redis-cli -h host -p port -a password
+
+lpush key1 string1
+lpush key1 string2
+lpush key1 string3
+sort key1
+sort key1 alpha
+sort key1 desc alpha
+
+
+
+sadd key2 member1
+sadd key2 member2
+sadd key2 member3
+
+hset key3 field1 value1
+hset key3 field2 value2
+hset key3 field3 value3
+
+
+hset users:id  name tony
+hset users:id  age  18
+
+hget users:id name
+hgetall users:id 
+ 
+HINCRBY users:id age  1

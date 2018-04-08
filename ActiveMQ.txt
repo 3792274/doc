@@ -1,0 +1,115 @@
+https://hub.docker.com/r/webcenter/activemq/
+
+
+------------
+Current Version: 5.15.2
+
+设置内存
+docker run --name='activemq' -it --rm   -e 'ACTIVEMQ_CONFIG_MINMEMORY=512'   -e 'ACTIVEMQ_CONFIG_MAXMEMORY=2048'  -P  webcenter/activemq:latest
+
+docker pull webcenter/activemq:5.14.3
+
+----------------------
+mkdir -p /opt/activemq && cd /opt/activemq  &&  wget https://raw.githubusercontent.com/disaster37/activemq/master/docker-compose.yml
+docker-compose up
+无法访问
+------------------------
+
+docker run --name='activemq' -d \
+-e 'ACTIVEMQ_CONFIG_NAME=amqp-srv1' \
+-e 'ACTIVEMQ_CONFIG_DEFAULTACCOUNT=false' \
+-e 'ACTIVEMQ_ADMIN_LOGIN=root' -e 'ACTIVEMQ_ADMIN_PASSWORD=12369' \
+-e 'ACTIVEMQ_USERS_myproducer=producerpassword' -e 'ACTIVEMQ_GROUPS_writes=myproducer' \
+-e 'ACTIVEMQ_USERS_myconsumer=consumerpassword' -e 'ACTIVEMQ_GROUPS_reads=myconsumer' \
+-e 'ACTIVEMQ_JMX_user1_role=readwrite' -e 'ACTIVEMQ_JMX_user1_password=jmx_password' \
+-e 'ACTIVEMQ_JMX_user2_role=read' -e 'ACTIVEMQ_JMX_user2_password=jmx2_password'  \
+-e 'ACTIVEMQ_CONFIG_TOPICS_topic1=mytopic1' -e 'ACTIVEMQ_CONFIG_TOPICS_topic2=mytopic2'  \
+-e 'ACTIVEMQ_CONFIG_QUEUES_queue1=myqueue1' -e 'ACTIVEMQ_CONFIG_QUEUES_queue2=myqueue2'  \
+-e 'ACTIVEMQ_CONFIG_MINMEMORY=1024' -e  'ACTIVEMQ_CONFIG_MAXMEMORY=4096' \
+-e 'ACTIVEMQ_CONFIG_SCHEDULERENABLED=true' \
+#-v /opt/activemq/data:/data \
+#-v /opt/activemq/activemq:/var/log/activemq \
+#-v /opt/activemq/conf:/opt/activemq/conf  \
+-p 8161:8161 \
+-p 61616:61616 \
+-p 61613:61613 \
+webcenter/activemq:5.14.3
+
+
+1883/tcp, 0.0.0.0:8161->8161/tcp, 5672/tcp, 0.0.0.0:61613->61613/tcp, 61614/tcp, 0.0.0.0:61616->61616/tcp 
+----------------------------------------------------------------------------------------
+【docker】
+https://github.com/victorskl/docker-activemq.git
+mkdir -p /opt/activeMQ/data &&  mkdir -p /opt/activeMQ/log &&  vim /opt/activeMQ/docker-compose.yml
+
+
+version: '2'
+services:
+
+  activemq:
+    image: webcenter/activemq:5.14.3
+    container_name: activemq
+    volumes:
+      - /opt/activeMQ/data:/data/activemq:rw
+      - /opt/activeMQ/log:/var/log/activemq:rw
+      - /etc/localtime:/etc/localtime:rw
+    ports:
+      - "8161:8161"
+      - "61616:61616"
+      - "61613:61613"
+    networks:
+      activemq:
+        ipv4_address: 172.20.0.2
+    ulimits:
+      nproc: 65535
+    hostname: activemq
+    mem_limit: 1024m
+    restart: always
+    environment:
+      ACTIVEMQ_ADMIN_LOGIN: root
+      ACTIVEMQ_ADMIN_PASSWORD: 12369
+      ACTIVEMQ_CONFIG_NAME: activemq
+      ACTIVEMQ_CONFIG_DEFAULTACCOUNT: 'false'
+      ACTIVEMQ_CONFIG_SCHEDULERENABLED: 'true'
+      ACTIVEMQ_USERS_myproducer: producerpassword
+      ACTIVEMQ_GROUPS_writes: myproducer
+      ACTIVEMQ_USERS_myconsumer: consumerpassword
+      ACTIVEMQ_GROUPS_reads: myconsumer
+      ACTIVEMQ_JMX_user1_role: readwrite
+      ACTIVEMQ_JMX_user1_password: jmx_password
+      ACTIVEMQ_JMX_user2_role: read
+      ACTIVEMQ_JMX_user2_password: jmx2_password
+      ACTIVEMQ_CONFIG_TOPICS_topic1: mytopic1
+      ACTIVEMQ_CONFIG_TOPICS_topic2: mytopic2
+      ACTIVEMQ_CONFIG_QUEUES_queue1: myqueue1
+      ACTIVEMQ_CONFIG_QUEUES_queue2: myqueue2
+      ACTIVEMQ_CONFIG_MINMEMORY: 1024
+      ACTIVEMQ_CONFIG_MAXMEMORY: 4096
+      
+ 
+networks:
+  activemq:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.20.0.0/24
+        gateway: 172.20.0.1
+
+
+
+cd /opt/activeMQ/ && rm -rf /opt/activeMQ/data && rm -rf /opt/activeMQ/log &&  docker-compose down  &&    docker-compose up -d
+
+
+
+
+
+ firewall-cmd --zone=public --add-port=8161/tcp --permanent  && firewall-cmd --zone=public --add-port=61616/tcp --permanent   && firewall-cmd --zone=public --add-port=61613/tcp --permanent && firewall-cmd --reload
+
+
+
+
+----------------------------------------------------------------------------------------
+
+管理
+http://10.20.1.10:8161/admin

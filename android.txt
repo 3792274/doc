@@ -1,0 +1,10 @@
+http://www.androiddevtools.cn/
+
+安装并配置android sdk
+https://www.jianshu.com/p/4ac1313b50cb
+
+
+
+----------------------------------
+adb devices
+adb shell

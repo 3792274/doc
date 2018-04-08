@@ -1,0 +1,932 @@
+﻿http://www.tothenew.com/blog/how-to-install-kubernetes-on-centos/
+http://www.tothenew.com/blog/?s=Kubernetes+
+http://jimmysong.io/blogs/kubernetes-kubedns-installation/
+
+nmcli d
+nmtui
+  
+-------------------------------
+ 
+
+
+1.minikube 
+  1.创建集群
+  minikube version  #查看版本
+  minikube start    #开始集群 -
+        -Windows：管理员运行：
+         无需：docker-machine create -d hyperv  --hyperv-virtual-switch "HYPERV_VIRTUAL_SWITCH"  minikubeVM  （Copying C:\Users\tony\.docker\machine\cache\boot2docker.iso to  C:\Users\tony\.docker\machine\machines\minikubeVM\boot2docker.iso）
+         （minikube delete && rm -rf ~/.minikube ）minikube start --vm-driver=hyperv --hyperv-virtual-switch=HYPERV_VIRTUAL_SWITCH
+  kubectl version           #查看与kubernetes交互的命令版本       
+  kubectl cluster-info      #查看族群信息（Kubernetes master，heapster，kubernetes-dashboard，monitoring-grafana，monitoring-influxdb）
+  kubectl get nodes         #在集群中查看节点信息
+
+  2，部署一个应用程序
+  kubectl run kubernetes-bootcamp --image=docker.io/jocatalin/kubernetes-bootcamp:v1 --port=8080  #creates a new deployment
+  kubectl get deployments                       #查看部署列表
+  kubectl proxy                                 #使用代理程序在我们的终端和Kubernetes集群之间创建一条路由  ，kubectl get pods 后，访问：http://127.0.0.1:8001/api/v1/proxy/namespaces/default/pods/kubernetes-bootcamp-2457653786-1m3fj/
+  export POD_NAME=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')  echo Name of the Pod: $POD_NAME          #获取Pod的名称并将其存储在POD_NAME环境变量中
+ 
+  3，查看配置
+  kubectl get pods 
+  kubectl describe pods/node/deployments   #查看pod中运行的容易，查看容器中运行的镜像，Pod’s container: IP address, the ports used and a list of events related to the lifecycle of the Pod.
+   kubectl logs $POD_NAME           #查看日志，使用到上面的变量
+   kubectl exec $POD_NAME env       #在容器中执行命令，只有1个pod可以省略名称
+   kubectl exec -ti $POD_NAME bash  #在容器中shell
+   
+  4，暴露服务
+  kubectl get services    #查询服务
+  kubectl expose deployment/kubernetes-bootcamp --type="NodePort" --port 8080  #暴露一个服务
+  kubectl describe services/kubernetes-bootcamp                                #查看服务对外暴露的端口
+  export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}')  #创建一个环境变量，表示暴露的端口号
+  echo NODE_PORT=$NODE_PORT   && curl host01:$NODE_PORT #访问暴露的服务
+  kubectl describe deployment            #查看部署时候自动创建的pod的labels
+  kubectl get pods -l run=kubernetes-bootcamp       #查看labels对应的pod
+  kubectl get services -l run=kubernetes-bootcamp    #查看labels对应的服务 
+  export POD_NAME=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')  && echo Name of the Pod: $POD_NAME  #获取pod名称并存储在环境变量中
+  kubectl label pod $POD_NAME app=v1  && kubectl describe pods $POD_NAME #修改pod的label
+  kubectl get pods -l app=v1   #查询使用指定label的pod
+  kubectl delete service -l run=kubernetes-bootcamp   && kubectl get services  #删除一个服务
+  kubectl exec -ti $POD_NAME curl localhost:8080  #删除服务后，app仍然在pod中运行
+  
+  5，缩放一个应用-Scaling -scale 
+  kubectl get deployments   #查看部署列表
+  kubectl scale deployments/kubernetes-bootcamp --replicas=4   && kubectl get deployments #扩展应用
+  kubectl get pods -o wide  #检查pod数量是否改变
+  kubectl describe deployments/kubernetes-bootcamp  #查看部署动作日志
+  kubectl describe services/kubernetes-bootcamp  #查看服务暴露的ip和端口
+  export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}')  && echo NODE_PORT=$NODE_PORT   && curl host01:$NODE_PORT #将端口存入环境变量，访问服务，负载均衡起作用
+  kubectl scale deployments/kubernetes-bootcamp --replicas=2  && kubectl get deployments  && kubectl get pods -o wide  #减少部署
+  
+  6.滚动更新，并执行回滚
+  kubectl get deployments  #查看部署列表
+  kubectl get pods         #查看pod运行列表
+  kubectl describe pods    #查看pod内运行容器app版本等信息
+  kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=jocatalin/kubernetes-bootcamp:v2     && kubectl get pods #更新镜像版本
+  kubectl describe services/kubernetes-bootcamp #查看服务暴露的ip和端口
+  export NODE_PORT=$(kubectl get services/kubernetes-bootcamp -o go-template='{{(index .spec.ports 0).nodePort}}')  && echo NODE_PORT=$NODE_PORT  && curl host01:$NODE_PORT  #将端口存入环境变量，访问服务，
+  kubectl rollout status deployments/kubernetes-bootcamp    #查看更新是否成功状态的另一种方法
+  kubectl describe pods #查看当前pod 容器内版本信息
+  ---回滚一个更新
+  -kubectl set image deployments/kubernetes-bootcamp kubernetes-bootcamp=jocatalin/kubernetes-bootcamp:v10   && kubectl get deployments  #部署一个新版本（错误的，没指定期望的数量）
+  -kubectl get pods  && kubectl describe pods  #查看后没发现有v10版本
+  -kubectl rollout undo deployments/kubernetes-bootcamp   && kubectl get pods  && kubectl describe pods #回滚
+
+  
+  ----------------------------------------------------------------------------------------------------------------------------------------------------
+  setenforce 0  &&  systemctl stop firewalld  && systemctl disable firewalld
+
+
+
+
+   --------------------------------------------------------------------------------------------
+   1.Docker。推荐使用版本1.12  -->  https://docs.docker.com/engine/installation/#supported-platforms
+                                    https://docs.docker.com/install/linux/docker-ce/centos/#upgrade-docker-after-using-the-convenience-script
+
+
+
+
+   sudo yum remove docker \
+                  docker-common \
+                  docker-selinux \
+                  docker-engine  \
+                  docker-engine-selinux
+rm -rf /etc/yum.repos.d/docker-ce.repo              
+yum install -y yum-utils device-mapper-persistent-data lvm2
+   
+   yum-config-manager \
+    --add-repo \
+    https://download.docker.com/linux/centos/docker-ce.repo   
+
+    yum makecache fast  #更新yum包索引。         
+    yum list docker-ce.x86_64  --showduplicates | sort -r #显示版本号列表   
+    yum install docker-ce-17.06.0.ce-1.el7.centos
+    systemctl start docker
+    systemctl enable docker
+    docker run hello-world
+    yum install docker-ce  #安装最新版本    
+
+    ----------------------------
+    手动安装：
+      1.  https://download.docker.com/linux/centos/7/x86_64/stable/Packages/  下载rpm
+      2.  sudo yum install /path/to/package.rpm
+      3.  sudo systemctl start docker
+      4.  sudo docker run hello-world
+
+    卸载：
+    sudo yum remove docker-ce
+    sudo rm -rf /var/lib/docker  
+
+    ----------------------
+   安装 1.12 版本
+    yum install -y yum-utils
+
+yum-config-manager \
+    --add-repo \
+    https://docs.docker.com/v1.13/engine/installation/linux/repo_files/centos/docker.repo
+yum makecache fast
+yum list docker-engine.x86_64  --showduplicates |sort -r
+yum list docker-engine-selinux  --showduplicates |sort -r
+yum list docker-compose  --showduplicates |sort -r
+
+
+yum install -y docker-engine-selinux-1.12.6
+yum install -y docker-engine-1.12.6
+systemctl start docker
+systemctl enable docker
+ 
+
+
+
+docker info
+
+增加配置：
+   vim /usr/lib/systemd/system/docker.service  
+   vim /etc/sysconfig/docker
+
+
+--------------------------------
+添加内核参数-https://yeasy.gitbooks.io/docker_practice/content/install/centos.html
+sudo tee -a /etc/sysctl.conf <<-EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+sudo sysctl -p
+
+sudo groupadd docker
+sudo usermod -aG docker $USER
+
+
+
+-----------------------------------------------------------------
+========================安装ETC(主)==============================
+  https://github.com/coreos/etcd/releases   ,集群https://github.com/coreos/etcd/blob/master/Documentation/op-guide/clustering.md
+  wget https://storage.googleapis.com/etcd/v3.1.5/etcd-v3.1.5-linux-amd64.tar.gz
+ 
+tar xvf etcd-v3.1.5-linux-amd64.tar.gz
+
+mkdir -p /etc/etcd  && vim  /etc/etcd/etcd.conf
+mkdir -p /var/lib/etcd/default.etcd
+chmod +x /root/etcd-v3.1.5-linux-amd64/etcd  && chmod +x /root/etcd-v3.1.5-linux-amd64/etcdctl
+mv /root/etcd-v3.1.5-linux-amd64/etcd /usr/bin/etcd  &&  mv /root/etcd-v3.1.5-linux-amd64/etcdctl /usr/bin/etcdctl  
+
+vim  /etc/etcd/etcd.conf
+# [member]
+ETCD_NAME=default
+ETCD_DATA_DIR="/var/lib/etcd/default.etcd"
+# ETCD_WAL_DIR=""
+# ETCD_SNAPSHOT_COUNT="10000"
+# ETCD_HEARTBEAT_INTERVAL="100"
+# ETCD_ELECTION_TIMEOUT="1000"
+# ETCD_LISTEN_PEER_URLS="http://localhost:2380"
+ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"
+# ETCD_MAX_SNAPSHOTS="5"
+# ETCD_MAX_WALS="5"
+# ETCD_CORS=""
+#
+# [cluster]
+# ETCD_INITIAL_ADVERTISE_PEER_URLS="http://localhost:2380"
+# if you use different ETCD_NAME (e.g. test), set ETCD_INITIAL_CLUSTER value for this name, i.e. "test=http://..."
+# ETCD_INITIAL_CLUSTER="default=http://localhost:2380"
+# ETCD_INITIAL_CLUSTER_STATE="new"
+# ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster"
+ETCD_ADVERTISE_CLIENT_URLS="http://0.0.0.0:2379"
+# ETCD_DISCOVERY=""
+# ETCD_DISCOVERY_SRV=""
+# ETCD_DISCOVERY_FALLBACK="proxy"
+# ETCD_DISCOVERY_PROXY=""
+#
+# [proxy]
+# ETCD_PROXY="off"
+# ETCD_PROXY_FAILURE_WAIT="5000"
+# ETCD_PROXY_REFRESH_INTERVAL="30000"
+# ETCD_PROXY_DIAL_TIMEOUT="1000"
+# ETCD_PROXY_WRITE_TIMEOUT="5000"
+# ETCD_PROXY_READ_TIMEOUT="0"
+#
+# [security]
+# ETCD_CERT_FILE=""
+# ETCD_KEY_FILE=""
+# ETCD_CLIENT_CERT_AUTH="false"
+# ETCD_TRUSTED_CA_FILE=""
+# ETCD_PEER_CERT_FILE=""
+# ETCD_PEER_KEY_FILE=""
+# ETCD_PEER_CLIENT_CERT_AUTH="false"
+# ETCD_PEER_TRUSTED_CA_FILE=""
+# [logging]
+# ETCD_DEBUG="false"
+# examples for -log-package-levels etcdserver=WARNING,security=DEBUG
+# ETCD_LOG_PACKAGE_LEVELS=""
+
+
+
+
+
+
+vim /usr/lib/systemd/system/etcd.service        ??? ?mv /usr/lib/systemd/system/etcd.service /etc/systemd/system/
+正确 vim /etc/systemd/system/etcd.service
+         /etc/systemd/system/etcd.service
+
+[Unit]
+Description=Etcd Server
+After=network.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+WorkingDirectory=/var/lib/etcd/
+EnvironmentFile=-/etc/etcd/etcd.conf
+User=root
+# set GOMAXPROCS to number of processors
+ExecStart=/bin/bash -c "GOMAXPROCS=$(nproc) /usr/bin/etcd --name=\"${ETCD_NAME}\" --data-dir=\"${ETCD_DATA_DIR}\" --listen-client-urls=\"${ETCD_LISTEN_CLIENT_URLS}\""
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+
+systemctl start etcd
+systemctl enable etcd
+systemctl status etcd
+etcdctl ls
+
+-----------------------------------------------------------------
+========================安装Flannel-(全部)==============================
+yum install -y flannel 
+
+vim /etc/sysconfig/flanneld
+# Flanneld configuration options  
+# etcd url location.  Point this to the server where etcd runs
+FLANNEL_ETCD_ENDPOINTS="http://127.0.0.1:2379"
+# etcd config key.  This is the configuration key that flannel queries
+# For address range assignment
+FLANNEL_ETCD_PREFIX="/kube-centos/network"
+# Any additional options that you want to pass
+#FLANNEL_OPTIONS=""
+
+
+etcd中为Flannel创建网络配置
+etcdctl mkdir /kube-centos/network  #在etcd中创建一个新的密钥，以使用以下命令来存储Flannel配置。
+etcdctl mk /kube-centos/network/config "{ \"Network\": \"172.30.0.0/16\", \"SubnetLen\": 24, \"Backend\": { \"Type\": \"vxlan\" } }"      #定义Flannel的网络配置，上述命令将172.30.0.0/16子网分配给Flannel网络
+
+验证配置
+etcdctl get /kube-centos/network/config
+cat /run/flannel/subnet.env  #启动后
+route -n
+
+启动服务
+systemctl restart flanneld
+systemctl enable  flanneld
+systemctl status  flanneld
+
+重启docker
+service docker restart
+
+
+注意：Docker0的IP地址是Flannel子网中的第一个IP地址
+3: flannel.1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1450 qdisc noqueue state UNKNOWN 
+    link/ether 62:7e:d4:99:b0:03 brd ff:ff:ff:ff:ff:ff
+    inet 172.30.79.0/32 scope global flannel.1
+       valid_lft forever preferred_lft forever
+    inet 172.30.50.0/32 scope global flannel.1
+       valid_lft forever preferred_lft forever
+4: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN 
+    link/ether 02:42:02:e9:80:3b brd ff:ff:ff:ff:ff:ff
+    inet 172.30.79.1/24 scope global docker0
+       valid_lft forever preferred_lft forever
+
+
+
+
+-----------------------------------------------------------------
+========================安装Kubernetes(全部)=====================
+
+wget https://github.com/kubernetes/kubernetes/releases/download/v1.6.0/kubernetes.tar.gz
+tar xvf  kubernetes.tar.gz
+cd kubernetes
+./cluster/get-kube-binaries.sh
+cd server
+tar xvf kubernetes-server-linux-amd64.tar.gz
+cd /root/kubernetes/server/kubernetes/server/bin
+rm -f *_tag *.tar
+chmod 755 *
+mv * /usr/bin
+
+
+
+Master节点的配置
+Master节点需要配置的kubernetes的组件有：
+
+kube-apiserver
+kube-controller-manager
+kube-scheduler
+kube-proxy
+kubectl
+
+
+
+Node节点需要配置：
+
+kube-proxy
+kubectl
+kube-proxy的配置与master节点的kube-proxy配置相同。
+kubectl的配置需要修改KUBELET_HOST为本机的hostname，其它配置相同。
+
+
+
+
+mkdir /etc/kubernetes && vim /etc/kubernetes/config
+
+###
+# kubernetes system config
+#
+# The following values are used to configure various aspects of all
+# kubernetes services, including
+#
+#   kube-apiserver.service
+#   kube-controller-manager.service
+#   kube-scheduler.service
+#   kubelet.service
+#   kube-proxy.service
+
+KUBE_ETCD_SERVERS="--etcd-servers=http://10.20.1.251:2379"
+
+# logging to stderr means we get it in the systemd journal
+KUBE_LOGTOSTDERR="--logtostderr=true"
+
+
+# journal message level, 0 is debug
+KUBE_LOG_LEVEL="--v=0"
+
+# Should this cluster be allowed to run privileged docker containers
+KUBE_ALLOW_PRIV="--allow-privileged=false"
+
+# How the controller-manager, scheduler, and proxy find the apiserver
+#KUBE_MASTER="--master=http://sz-pg-oam-docker-test-001.tendcloud.com:8080"
+KUBE_MASTER="--master=http://10.20.1.251:8080"
+
+ 
+
+-----------------------------------------------------------------
+========================kube-apiserver(主)=======================
+
+vim /usr/lib/systemd/system/kube-apiserver.service    ???/usr/lib/systemd/system/kube-apiserver.service
+[Unit]
+Description=Kubernetes API Service
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+After=etcd.service
+
+[Service]
+EnvironmentFile=-/etc/kubernetes/config
+EnvironmentFile=-/etc/kubernetes/apiserver
+ExecStart=/usr/bin/kube-apiserver \
+      $KUBE_LOGTOSTDERR \
+      $KUBE_LOG_LEVEL \
+      $KUBE_ETCD_SERVERS \
+      $KUBE_API_ADDRESS \
+      $KUBE_API_PORT \
+      $KUBELET_PORT \
+      $KUBE_ALLOW_PRIV \
+      $KUBE_SERVICE_ADDRESSES \
+      $KUBE_ADMISSION_CONTROL \
+      $KUBE_API_ARGS
+Restart=on-failure
+Type=notify
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+ 
+
+添加apiserver配置文件
+vim /etc/kubernetes/apiserver
+
+###
+## kubernetes system config
+##
+## The following values are used to configure the kube-apiserver
+##
+#
+## The address on the local server to listen to.
+#KUBE_API_ADDRESS="--address=sz-pg-oam-docker-test-001.tendcloud.com"
+KUBE_API_ADDRESS="--address=0.0.0.0"
+#
+## The port on the local server to listen on.
+KUBE_API_PORT="--port=8080"
+
+#
+## Port minions listen on
+KUBELET_PORT="--kubelet-port=10250"
+ 
+
+# Address range to use for services(Work unit of Kubernetes)
+KUBE_SERVICE_ADDRESSES="--service-cluster-ip-range=10.254.0.0/16"
+
+#
+## Comma separated list of nodes in the etcd cluster
+KUBE_ETCD_SERVERS="--etcd-servers=http://127.0.0.1:2379"
+#
+## Address range to use for services
+KUBE_SERVICE_ADDREKUBELET_POD_INFRA_CONTAINERSSES="--service-cluster-ip-range=10.254.0.0/16"
+#
+## default admission control policies
+#KUBE_ADMISSION_CONTROL="--admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ResourceQuota"
+KUBE_ADMISSION_CONTROL="--admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota"
+
+#
+## Add your own!
+#KUBE_API_ARGS=""
+KUBE_API_ARGS="--client-ca-file=/srv/kubernetes/ca.crt --tls-cert-file=/srv/kubernetes/server.cert --tls-private-key-file=/srv/kubernetes/server.key"
+
+
+制作证书 --https://github.com/kubernetes/kubernetes/blob/master/cluster/saltbase/salt/generate-cert/make-ca-cert.sh
+wget https://raw.githubusercontent.com/kubernetes/kubernetes/master/cluster/saltbase/salt/generate-cert/make-ca-cert.sh
+vim make-ca-cert.sh
+修改30行： cert_group=${CERT_GROUP:-root}  #cert_group=${CERT_GROUP:-kube}
+bash make-ca-cert.sh "10.20.1.251" "IP:10.20.1.251,IP:10.254.0.1,DNS:kubernetes,DNS:kubernetes.default,DNS:kubernetes.default.svc,DNS:kubernetes.default.svc.cluster.local"
+
+
+ 
+--------------------------------------------------------------------------------
+========================Kubernetes Controller Manager(主)=======================
+vim /usr/lib/systemd/system/kube-controller.service
+
+Description=Kubernetes Controller Manager
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+EnvironmentFile=-/etc/kubernetes/config
+EnvironmentFile=-/etc/kubernetes/controller-manager
+ExecStart=/usr/bin/kube-controller-manager \
+      $KUBE_LOGTOSTDERR \
+      $KUBE_LOG_LEVEL \
+      $KUBE_MASTER \
+      $KUBE_CONTROLLER_MANAGER_ARGS
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+
+配置
+vim /etc/kubernetes/controller-manager
+
+###
+# The following values are used to configure the kubernetes controller-manager
+# defaults from config and apiserver should be adequate
+# Add your own!
+#KUBE_CONTROLLER_MANAGER_ARGS=""
+KUBE_CONTROLLER_MANAGER_ARGS="--root-ca-file=/srv/kubernetes/ca.crt --service-account-private-key-file=/srv/kubernetes/server.key"
+
+
+--------------------------------------------------------------------------------
+========================scheduler配置调度(主)===================================
+
+vim /usr/lib/systemd/system/kube-scheduler.service
+
+[Unit]
+Description=Kubernetes Scheduler Plugin
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+
+[Service]
+EnvironmentFile=-/etc/kubernetes/config
+EnvironmentFile=-/etc/kubernetes/scheduler
+ExecStart=/usr/bin/kube-scheduler \
+      $KUBE_LOGTOSTDERR \
+      $KUBE_LOG_LEVEL \
+      $KUBE_MASTER \
+      $KUBE_SCHEDULER_ARGS
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+
+配置：vim /etc/kubernetes/scheduler
+###
+# kubernetes scheduler config
+# default config should be adequate
+# Add your own!
+KUBE_SCHEDULER_ARGS=""
+
+
+
+
+--------------------------------------------------------------------------------
+========================配置kube-proxy(全部)===================================
+
+vim /usr/lib/systemd/system/kube-proxy.service
+
+[Unit]
+Description=Kubernetes Kube-Proxy Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=network.target
+
+[Service]
+EnvironmentFile=-/etc/kubernetes/config
+EnvironmentFile=-/etc/kubernetes/proxy
+ExecStart=/usr/bin/kube-proxy \
+      $KUBE_LOGTOSTDERR \
+      $KUBE_LOG_LEVEL \
+      $KUBE_MASTER \
+      $KUBE_PROXY_ARGS
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+
+mkdir -p /etc/kubernetes  && vim /etc/kubernetes/proxy
+
+###
+# kubernetes proxy config
+# default config should be adequate
+# Add your own!
+KUBE_PROXY_ARGS=""
+
+
+
+--------------------------------------------------------------------------------
+========================配置kubelet(全部)=======================================
+
+mkdir -p /var/lib/kubelet  && vim /usr/lib/systemd/system/kubelet.service
+[Unit]
+Description=Kubernetes Kubelet Server
+Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+After=docker.service
+Requires=docker.service
+
+[Service]
+WorkingDirectory=/var/lib/kubelet
+EnvironmentFile=-/etc/kubernetes/config
+EnvironmentFile=-/etc/kubernetes/kubelet
+ExecStart=/usr/bin/kubelet \
+            $KUBE_LOGTOSTDERR \
+            $KUBE_LOG_LEVEL \
+            $KUBELET_API_SERVER \
+            $KUBELET_ADDRESS \
+            $KUBELET_PORT \
+            $KUBELET_HOSTNAME \
+            $KUBE_ALLOW_PRIV \
+            $KUBELET_POD_INFRA_CONTAINER \
+            $KUBELET_ARGS  \
+            --cgroup-driver=systemd
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+
+配置
+vim /etc/kubernetes/kubelet
+
+###
+## kubernetes kubelet (minion) config
+#
+## The address for the info server to serve on (set to 0.0.0.0 or "" for all interfaces)
+KUBELET_ADDRESS="--address=0.0.0.0"
+#
+## The port for the info server to serve on
+KUBELET_PORT="--port=10250"
+#
+## You may leave this blank to use the actual hostname
+#要改成自己的主机名
+#KUBELET_HOSTNAME="--hostname-override=sz-pg-oam-docker-test-001.tendcloud.com"
+KUBELET_HOSTNAME="--hostname-override=10.20.1.251"
+#
+## location of the api-server
+#KUBELET_API_SERVER="--api-servers=http://sz-pg-oam-docker-test-001.tendcloud.com:8080"
+KUBELET_API_SERVER="--api-servers=http://10.20.1.251:8080"
+#
+## pod infrastructure container
+#KUBELET_POD_INFRA_CONTAINER="--pod-infra-container-image=registry.access.redhat.com/rhel7/pod-infrastructure:latest"
+#
+## Add your own!
+KUBELET_ARGS=""
+ 
+ 
+如果启动时：kubelet: error: failed to run Kubelet: failed to create kubelet: misconfiguration: kubelet cgroup driver: "cgroupfs" is different from docker cgroup driver: "systemd"
+修改：vim /usr/lib/systemd/system/docker.service   L:21
+--exec-opt native.cgroupdriver=cgroupfs \      --exec-opt native.cgroupdriver=systemd \
+
+或者 vim /usr/lib/systemd/system/kubelet.service
+增加启动参数：--cgroup-driver=systemd
+
+
+查看docker配置
+docker info |grep -i cgroup
+systemctl daemon-reload
+service kubelet restart
+
+
+kubectl version --short
+
+[root@m1 ~]# kubectl get role -n kube-system
+NAME                                        AGE
+extension-apiserver-authentication-reader   8h
+system:controller:bootstrap-signer          8h
+system:controller:token-cleaner             8h
+
+
+[root@m1 ~]# kubectl get rolebinding -n kube-system
+NAME                                 AGE
+system:controller:bootstrap-signer   8h
+system:controller:token-cleaner      8h
+
+[root@m1 ~]# kubectl get clusterrole
+kubectl get -a clusterrole,clusterrolebinding
+
+--------------------------------------------------------------------------------
+========================在Master节点上执行=======================================
+
+for SERVICES in etcd kube-apiserver kube-controller kube-scheduler kube-proxy kubelet flanneld; do
+    systemctl restart $SERVICES
+    systemctl enable $SERVICES
+    systemctl status $SERVICES
+done
+
+========================在Node节点上执行=======================================
+
+for SERVICES in kube-proxy kubelet flanneld; do
+    systemctl restart $SERVICES
+    systemctl enable $SERVICES
+    systemctl status $SERVICES
+done
+
+
+[root@localhost ~]# kubectl get nodes
+NAME          STATUS    AGE       VERSION
+10.20.1.251   Ready     5d        v1.6.0
+10.20.1.252   Ready     5d        v1.6.0
+10.20.1.253   Ready     5d        v1.6.0
+
+
+
+[root@localhost ~]# kubectl cluster-info
+Kubernetes master is running at http://localhost:8080
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+
+
+
+--------------------------------------------------------------------------------
+========================部署DNS pod和服务，并配置Kubelet以解决来自此DNS服务=======================================
+ 1.git位置： kubernetes / cluster / addons / dns
+   会使用以下3个Google镜像
+    gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64:1.14.1
+    gcr.io/google_containers/k8s-dns-kube-dns-amd64:1.14.1
+    gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.1
+ 
+ 2.kubectl get clusterrolebindings system:kube-dns -o yaml   #将 kube-system 命名空间的 kube-dns ServiceAccount 与 system:kube-dns Role 绑定
+
+ 3. vim  /root/kubernetes/cluster/addons/dns/kubedns-svc.yaml.base  --->  clusterIP: __PILLAR__DNS__SERVER__   --->   clusterIP: 10.254.3.100  #这个 IP 需要和 kubelet 的 --cluster-dns 参数值一致
+    cp /root/kubernetes/cluster/addons/dns/kubedns-svc.yaml.base /root/kubernetes/cluster/addons/dns/kubedns-svc.yaml
+
+ 4.vim /root/kubernetes/cluster/addons/dns/kubedns-controller.yaml.base    --->   - --domain=__PILLAR__DNS__DOMAIN__.   --->  - --domain=cluster.local. 
+                                                                           --->   __PILLAR__FEDERATIONS__DOMAIN__MAP__  --->  #__PILLAR__FEDERATIONS__DOMAIN__MAP__
+                                                                           --->   - --server=/__PILLAR__DNS__DOMAIN__/127.0.0.1#10053    -->  - --server=/cluster.local./127.0.0.1#10053
+                                                                           --->   - --probe=kubedns,127.0.0.1:10053,kubernetes.default.svc.__PILLAR__DNS__DOMAIN__,5,A     -->  - --probe=kubedns,127.0.0.1:10053,kubernetes.default.svc.cluster.local.,5,A
+                                                                           --->   - --probe=dnsmasq,127.0.0.1:53,kubernetes.default.svc.__PILLAR__DNS__DOMAIN__,5,A        -->  - --probe=dnsmasq,127.0.0.1:53,kubernetes.default.svc.cluster.local.,5,A
+   cp  /root/kubernetes/cluster/addons/dns/kubedns-controller.yaml.base      /root/kubernetes/cluster/addons/dns/kubedns-controller.yaml
+
+
+ 5. ls *.yaml  
+    kubedns-cm.yaml  kubedns-controller.yaml  kubedns-sa.yaml  kubedns-svc.yaml
+
+    kubectl create -f .
+    vim /etc/kubernetes/kubelet    --->  KUBELET_ARGS="--cluster-dns=10.254.3.100 --cluster-domain=cluster.local"
+    systemctl restart kubelet
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   --------------------------------------------------------------------------------------------
+   2.安装和设置kubectl
+     1.下载 kubectl
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.7.0/bin/linux/amd64/kubectl #特定版本
+    chmod +x ./kubectl                           #使kubectl二进制可执行
+    sudo mv ./kubectl /usr/local/bin/kubectl     #将二进制文件移动到PATH中。
+       --ssh-keygen                                      #生成密钥   ~/.ssh/authorized_keys
+       --ssh-copy-id -i ~/.ssh/id_rsa.pub 10.20.1.201    #复制密钥到远程主机
+       --ssh root@10.20.1.201                            #免密码登陆远程主机
+       --scp root@10.20.1.251:/root/kubectl /root/kubectl
+
+  	2.配置自动完成
+    yum install -y bash-completion 
+    source /usr/share/bash-completion/bash_completion 
+    source <(kubectl completion bash)
+  	echo "source <(kubectl completion bash)" >> ~/.bashrc  && source ~/.bashrc
+
+
+  	3.检查kubectl 是否正确配置
+    kubectl cluster-info
+
+   --------------------------------------------------------------------------------------------
+   3.安装kubelet和kubeadm
+   yum list kubeadm  --showduplicates |sort -r
+   yum list kubelet  --showduplicates |sort -r
+   yum list kubectl  --showduplicates |sort -r
+   yum list kubernets-cni  --showduplicates |sort -r
+
+
+     1.yum  update && yum  upgrade
+     2.ssh 
+
+cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOF
+setenforce 0
+yum install -y kubelet kubeadm
+systemctl enable kubelet && systemctl start kubelet
+
+
+kubeadm init --kubernetes-version=v1.6.1 --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=10.20.1.251
+
+
+--------------------------------------------------------------
+
+kubectl get deployments
+kubectl get services
+kubectl get pods
+kubectl get nodes
+
+kubectl delete services example-service
+
+delete deployments --all
+
+kubectl describe pod fail-1036623984-hxoas
+
+
+kubectl run update-demo --image=gcr.io/google_containers/update-demo:nautilus --port=80 -l name=update-demo
+kubectl get deployments
+kubectl get pods
+kubectl scale deployment/update-demo --replicas=4
+kubectl get deployments
+kubectl get pods
+
+kubectl edit deployment/update-demo   ->spec:containers:images:gcr.io/google_containers/update-demo:kitt
+kubectl get deployments
+kubectl get pods
+kubectl rollout undo deployment/update-demo
+kubectl get deployments
+kubectl get pods
+kubectl get describe deployments
+kubectl describe svc example-service
+
+kubectl run nginx --replicas=2 --labels="run=load-balancer-example" --image=10.20.1.240/nginx/nginx:latest  --port=80
+kubectl expose deployment nginx --type=NodePort --name=example-service
+kubectl describe svc example-service
+curl "10.254.183.32:80"
+kubectl scale deployment/nginx  --replicas=1
+
+
+
+KUBELET_POD_INFRA_CONTAINER="--pod-infra-container-image=sz-pg-oam-docker-hub-001.tendcloud.com/library/pod-infrastructure:rhel7"
+KUBELET_POD_INFRA_CONTAINER="--pod-infra-container-image=registry.access.redhat.com/rhel7/pod-infrastructure:latest"
+                                                        
+docker pull registry.access.redhat.com/rhel7/pod-infrastructure:latest
+docker pull 10.20.1.240/rhel7/pod-infrastructure:latest
+
+
+
+kubectl delete pods --all
+kubectl delete svc --all
+kubectl delete deployments --all
+
+kubectl expose deploy my-nginx   #Export 该 Deployment, 生成 my-nginx 服务
+
+kubectl get services --all-namespaces
+kubectl get services --all-namespaces |grep my-nginx
+
+
+install conntrack (kube-proxy's runtime dependency)
+yum install conntrack 
+systemctl restart  kube-proxy
+
+
+
+kubectl cluster-info
+kubectl get pods -n kube-system
+kubectl logs monitoring-influxdb-705486591-6dks7  -n kube-system -f
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+=======================================================================================================================================
+---------------------------------------------------------------------------------------------------------------------------------------
+1.Installing kubectl  -->  https://kubernetes.io/docs/tasks/tools/install-kubectl/
+curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl  或者
+curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.7.0/bin/linux/amd64/kubectl
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
+
+2.Installing kubelet and kubeadm  主机（sudo -i 、Disabling SELinux by running setenforce 0）
+cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOF
+setenforce 0
+yum install -y kubelet kubeadm
+systemctl enable kubelet && systemctl start kubelet
+
+---------------------------------------------------------------------------------------------------------------------------------------
+=======================================================================================================================================
+---------------------------------------------------------------------------------------------------------------------------------------
+1.First,we should make sure the ip-forward enabled on the linux kernel of every node.Just execute command:
+sysctl net.ipv4.conf.all.forwarding = 1
+
+2.Secondly,if your docker's version >=1.13,the default FORWARD chain policy was DROP,you should set default policy of the FORWARD chain to ACCEPT:$ sudo iptables -P FORWARD ACCEPT.
+
+3.Then the configuration of the kube-proxy must be pass in :
+--cluster-cidr=.
+
+ps: --cluster-cidr string The CIDR range of pods in the cluster. It is used to bridge traffic coming from outside of the cluster. If not provided, no off-cluster bridging will be performed.
+Reference to this:kubernetes/kubernetes#36835
+---------------------------------------------------------------------------------------------------------------------------------------
+
+kubectl version
+cat /etc/os-release
+uname -a
+
+kubectl get  pod nginx-636556946-cgqw3 -o wide
+
+
+
+kubectl get replicasets
+kubectl describe replicasets

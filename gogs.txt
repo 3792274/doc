@@ -1,0 +1,50 @@
+https://hub.docker.com/r/gogs/gogs/
+
+1.docker run mysql
+2.docker run -d -P  --name gogs    -v /opt/gogs:/data  -p 3022:22 -p 3000:3000    gogs/gogs
+
+http://10.20.1.10:10080
+
+-----------------------------------------------------------------
+【docker】
+
+mkdir -p /opt/gogs/ &&  vim /opt/gogs/docker-compose.yml
+
+
+version: '2'
+services:
+
+  gogs:
+    image: gogs/gogs
+    container_name: gogs
+    volumes:
+      - /opt/gogs/data:/data:rw
+      - /etc/localtime:/etc/localtime:rw
+    ports:
+      - "3022:22"
+      - "3000:3000"
+    networks:
+      gogs:
+        ipv4_address: 172.21.0.2
+    ulimits:
+      nproc: 65535
+    hostname: gogs
+    mem_limit: 1024m
+    restart: always
+    environment:
+      Hello: World
+
+networks:
+  gogs:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.21.0.0/24
+        gateway: 172.21.0.1
+
+
+
+cd /opt/gogs/ &&    docker-compose down  &&    docker-compose up -d
+ firewall-cmd --zone=public --add-port=3022/tcp --permanent   && firewall-cmd --zone=public --add-port=3000/tcp --permanent && firewall-cmd --reload
+-----------------------------------------------------------------

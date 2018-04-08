@@ -1,0 +1,249 @@
+﻿https://www.docker-cn.com/what-docker
+
+
+https://store.docker.com/editions/community/docker-ce-server-centos
+https://docs.docker.com/engine/installation/linux/docker-ce/centos/#install-docker-ce
+https://docs.docker.com/engine/installation/linux/docker-ce/centos/#docker-ee-customers
+http://www.widuu.com/docker/installation/centos.html
+https://docs.docker.com/engine/userguide/storagedriver/device-mapper-driver/#device-mapper-and-docker-performance
+-------------------------------------------------------------------------------
+docker 	请添加腾讯源
+echo "OPTIONS='--registry-mirror=https://mirror.ccs.tencentyun.com'" >> /etc/sysconfig/docker
+systemctl daemon-reload
+service docker restart
+
+
+配置镜像
+/etc/docker/daemon.json 
+{"registry-mirrors":["https://docker.mirrors.ustc.edu.cn","https://registry.docker-cn.com"],"insecure-registries":[], "debug":true, "experimental": true}
+
+
+
+------------------------------------------------
+
+SSh
+https://hub.docker.com/r/stephenlu/centos-ssh-root/~/dockerfile/
+
+-----------------------
+
+http://blog.csdn.net/zhuchuangang/article/details/51306191
+
+Dockerfile创建自定义Docker镜像以及CMD与ENTRYPOINT指令的比较
+http://www.cnblogs.com/lienhua34/p/5170335.html
+
+
+
+----------------------------------------
+service docker start
+sudo  systemctl start docker.service
+sudo chkconfig docker on  //配置让 docker 服务随系统自动启动
+sudo systemctl enable docker.service  //验证 docker 是否安装成功
+
+docker run -i -t ubuntu /bin/bash
+
+docker images
+docker run -i -t ubuntu echo hello world
+
+-----------------------------------------
+运行桌面 ---https://github.com/rogaha/docker-desktop
+1.docker build -t vpsee/docker-desktop git://github.com/rogaha/docker-desktop.git
+  Removing intermediate container a8a1951ecbbe
+  Successfully built 46e487cc786d
+2.[root@tw03-pay-dev-001 run]# $CONTAINER_ID=$(docker run -d -P vpsee/docker-desktop)
+-bash: =2ad2cd403f826e41a8ab7d372982d73b3d4f8068a3c9b31358b8a85b71620b64: command not found
+
+
+3.[root@tw03-pay-dev-001 run]# docker logs 2ad2cd403f826e41a8ab7d372982d73b3d4f8068a3c9b31358b8a85b71620b64 | sed -n 1p
+User: docker Password: leeJ7eitien9
+
+4.docker@2ad2cd403f82:~$ ifconfig | grep "inet addr:" 
+          inet addr:172.17.0.2  Bcast:0.0.0.0  Mask:255.255.0.0
+          inet addr:127.0.0.1  Mask:255.0.0.0
+
+
+5.ssh docker@172.17.0.2 -p 1024 "sh -c './docker-desktop -s 800x600 -d 10 > /dev/null 2>&1 &'" 
+
+
+
+
+https://docs.docker.com/docker-for-windows/install/#where-to-go-next
+
+
+--------------------------------------------
+通过网页集中访问Docker容器
+http://atiger77.blog.51cto.com/5258236/1676231
+
+
+
+
+
+------------------------------------------------
+$ docker pull fcwu/docker-ubuntu-vnc-desktop
+$ CONTAINER_ID=$(docker run -d -p 6080:6080 dorowu/ubuntu-desktop-lxde-vnc)
+$ docker logs $CONTAINER_ID | sed -n 1p
+User: ubuntu Pass: ubuntu
+
+-----------------------------------
+Stop all containers
+docker stop $(docker ps -a -q)
+
+Delete all containers
+docker rm $(docker ps -a -q)
+
+Delete all images
+docker rmi $(docker images -q)
+docker rmi $(docker images -f "dangling=true" -q)
+
+docker rmi $(docker images | grep "^" | awk "{print $3}")
+
+---------------------------------
+
+----------------------------------------------
+https://docs.docker.com/engine/reference/run/#operator-exclusive-options
+
+$ docker run [OPTIONS] IMAGE[:TAG|@DIGEST] [COMMAND] [ARG...]
+$ docker run -d -p 80:80 my_image service nginx start
+docker run -i -t --rm  -p 80:80 nginx
+docker run -ti --rm=true test /bin/bash -c 'echo Hello'
+
+ 
+docker run -ti  -p 9091:9091 -v c:/WorkSpaces/IntelliJ IDEA/Pay/pay-core/target:/opt/APP/lotteryPay  nimmis/java-centos:oracle-8-jdk
+docker run -it  -p 9091:9091 -v "c:/WorkSpaces/IntelliJ IDEA/Pay":/Pay  pay-core
+docker run -it  -p 9091:9091 -v /var/lib/jenkins/workspace/deploy/:/var/lib/jenkins/workspace/deploy/ pay
+
+docker run -ti -e USERNAME=test -e PASSWORD=test -p 9091:9091 --name java -v /opt/APP/lotteryPay:/opt/APP/lotteryPay  nimmis/java-centos:oracle-8-jdk
+
+java -jar /opt/APP/lotteryPay/pay-core-1.0.jar --logging.level.dc.pay=INFO  --server.port=9091 --eureka.instance.ip-address=172.28.200.41  --eureka.instance.instance-id=172.28.200.41:9091  --spring.profiles.active=test
+
+docker start -a -i 089
+
+---------------------------------------------
+Dockerfile 
+http://www.cnblogs.com/lienhua34/p/5170335.html
+
+docker build -t pay . 
+docker build -f /path/to/a/Dockerfile . 
+
+-------------------------------------
+获取ip 
+http://blog.csdn.net/cnbird2008/article/details/4924226
+http://blog.csdn.net/lz7955823/article/details/52804628
+
+$(ifconfig ens160 | grep "inet" | awk '{ print $2}' |awk 'NR==1{print $1}')
+
+获取docker宿主机ip
+alias hostip=$(ifconfig ens160 | grep "inet" | awk '{ print $2}' |awk 'NR==1{print $1}')   && docker run --add-host=pay-core-docker:$(hostip) -p 3001:3000 -v node start.js
+
+
+---------------------------------------
+Dockerfile如何引用宿主机的环境变量啊？
+Dockerfile：
+...
+ARG JAVA_HOME
+ENV JAVA_HOME $JAVA_HOME
+...
+构建使用：
+docker build --build-arg JAVA_HOME=$JAVA_HOME ...
+---------------------------------------
+docker rmi pay-core/pay
+docker build --no-cache=true --rm=true  -t pay-core/pay:latest  /var/lib/jenkins/workspace/Pay/pay-core
+
+docker run -i -t --rm  -p 10241:9090 pay-core/pay  --logging.level.dc.pay=INFO   --eureka.instance.ip-address=$(ifconfig ens160 | grep "inet" | awk '{ print $2}' |awk 'NR==1{print $1}')   --eureka.instance.instance-id=$(ifconfig ens160 | grep "inet" | awk '{ print $2}' |awk 'NR==1{print $1}'):10241  --spring.profiles.active=dev
+
+
+------------------------------------
+设置时区
+
+1.	#设置时区
+	RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+	  && echo 'Asia/Shanghai' >/etc/timezone \
+2.docker run --name <name> ：：
+ .... 
+
+
+
+
+----------------------------------------
+docker jenkins-/usr/share/jenkins/jenkins.war
+https://hub.docker.com/r/jenkins/jenkins/  -->docker pull jenkins/jenkins:lts
+
+
+iptables -t filter -N DOCKER
+iptables -t nat -N DOCKER
+chcon -Rt svirt_sandbox_file_t /jenkins
+
+docker run --name jenkins  -d -u root -P -v /jenkins:/var/jenkins_home jenkins/jenkins:lts   --env JAVA_OPTS=-Dhudson.footerURL=http://mycompany.com
+docker logs jenkins  
+docker exec -it jenkins  bash 
+cat /var/jenkins_home/secrets/initialAdminPassword
+
+
+设置 jenkins 时间 -->vi /usr/local/bin/jenkins.sh ->开头添加
+/bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo 'Asia/Shanghai'>/etc/timezone
+
+
+docker run --name jenkins -d -p 8080:8080 -p 50000:50000  jenkins/jenkins:lts
+scp -R /var/Jenkins_home root@10.20.1.10:/home/myJenkins
+
+-------------------------------------
+docker sonarqube
+https://hub.docker.com/_/sonarqube/
+docker run -d --name sonarqube -p 9000:9000 -p 9092:9092 sonarqube
+mvn sonar:sonar
+
+docker run -d --name sonarqube -p 9000:9000 -p 9092:9092  --link pay-mysql:pay-mysql-db -e SONARQUBE_JDBC_USERNAME=root -e SONARQUBE_JDBC_PASSWORD=12369 -e SONARQUBE_JDBC_URL=jdbc:mysql://pay-mysql-db:3306/sonar?useUnicode=true^&characterEncoding=utf8^&rewriteBatchedStatements=true sonarqube
+docker exec -it  sonarqube bash
+下载中文：https://github.com/SonarQubeCommunity/sonar-l10n-zh  ==>  sonar-l10n-zh-plugin-1.16.jar    ==>  /opt/sonarqube/extensions/plugins
+
+-----Installing and Configuring SonarQube Runner
+https://docs.sonarqube.org/display/SONARQUBE51/Installing+and+Configuring+SonarQube+Runner
+
+ 
+-----centos
+docker run -d --name sonarqube -p 56789:9000 -p 56790:9092   -e SONARQUBE_JDBC_USERNAME=root -e SONARQUBE_JDBC_PASSWORD=12369 -e SONARQUBE_JDBC_URL=jdbc:mysql://10.20.1.201:3301/sonar?useUnicode=true\&characterEncoding=utf8\&rewriteBatchedStatements=true  sonarqube  
+
+
+-------------------------------------
+关闭防火墙：
+service iptables stop
+systemctl stop firewalld.service
+
+[root@localhost jenkins]# systemctl stop firewalld.service    #停止firewall
+[root@localhost jenkins]# systemctl disable firewalld.service #禁止firewall开机启动
+Removed symlink /etc/systemd/system/basic.target.wants/firewalld.service.
+Removed symlink /etc/systemd/system/dbus-org.fedoraproject.FirewallD1.service.
+[root@localhost jenkins]# firewall-cmd --state                #查看默认防火墙状态（关闭后显示notrunning，开启后显示running）
+not running
+
+-------------------------------------
+下发iptables规则,映射端口
+iptables -t nat -A  DOCKER -p tcp --dport 443 -j DNAT --to-destination 172.17.0.19:8443
+
+
+---------------------------------------------------
+创建数据卷  
+
+电脑上当前存在的数据卷列表
+docker volume ls  
+
+1.添加一个数据卷
+docker run -ti -v /data centos /bin/bash 
+df -hl
+
+
+1.2、挂载宿主文件夹到数据卷
+docker run -d  --name docker-data-Mysql-3306  -v D:/DockerData/Mysql-3306:/data  centos   #创建容器卷
+docker run -d -P --name mysql3306 --volumes-from mysql3306data  -p 3306:3306 -e MYSQL_ROOT_PASSWORD=12369  mysql:5.7.21
+
+
+docker inspect mysql
+
+
+---------------------------------------------------
+image 导入 导出
+1.镜像的保存 docker save 33c26d72bd74 > redis4.0.tar  && ls -lh
+2.镜像的导入 docker load < redis4.0.tar  &&  docker tag 33c26d72bd74 redis:4.0
+3.容器的导出 docker ps  &&  docker export b91d9ad83efa > tomcat80824.tar  && ls -lh
+4.容器的导入 docker import tomcat80824.tar  &&  docker images  && docker tag 880f tomcat80824:1.0 &&  docker images  
+
+-----------------------------------------

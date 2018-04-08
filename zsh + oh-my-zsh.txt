@@ -1,0 +1,27 @@
+cat /etc/shells
+https://github.com/robbyrussell/oh-my-zsh
+
+http://www.jianshu.com/p/fc63d64c06d5
+https://medium.com/@danielgodigna/how-to-install-zsh-oh-my-zsh-and-themes-in-ubuntu-on-windows-933489b6d6e0
+https://evdokimovm.github.io/windows/zsh/shell/syntax/highlighting/ohmyzsh/hyper/terminal/2017/02/24/how-to-install-zsh-and-oh-my-zsh-on-windows-10.html
+
+--------------------------------------------------
+sudo apt-get install zsh
+sudo apt-get install fish
+
+
+sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
+
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+
+
+vim .bashrc 
+
+if [ -t 1 ]; then
+exec zsh
+fi
+
+
+vim .zshrc
+ZSH_THEME=¡±robbyrussell¡±
+ZSH_THEME=¡±agnoster¡±

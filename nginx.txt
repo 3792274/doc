@@ -1,0 +1,167 @@
+nginx 反代
+
+https://nginx.org/
+https://hub.docker.com/_/nginx/
+
+
+openresty
+http://openresty.org/cn/
+https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=openresty+&starCount=0
+
+
+
+Tengine
+http://tengine.taobao.org/index_cn.html
+
+
+
+
+
+
+mkdir -p /opt/nginx/conf/ && mkdir -p /opt/nginx/www  && mkdir -p  /opt/nginx/log/
+docker run  -d  -p 8080:80  -p 81:81 --name nginx -v /opt/nginx/conf/nginx.conf:/etc/nginx/nginx.conf:rw   -v /opt/nginx/www:/usr/share/nginx/html:rw -v /opt/nginx/log/:/var/log/nginx/:rw   nginx:1.13.5
+
+
+vim /opt/nginx/conf/nginx.conf
+
+user  nginx;
+worker_processes  1;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+
+    #代理服务设置
+    server {
+        resolver 8.8.8.8;  #可用的DNS
+        listen 81;   #监听的端口
+        location / { 
+            proxy_pass $scheme://$host$request_uri;
+            proxy_set_header Host $http_host;
+            proxy_buffers   256 4k;
+            proxy_max_temp_file_size        0k;
+        }   
+    }
+
+
+
+    include /etc/nginx/conf.d/*.conf;
+}
+
+
+
+
+
+
+---------------------------
+
+
+
+
+在 /etc/nginx/sites-available 中新建一个文件，把以下内容写入文件中。
+
+server {
+    server_name 域名或IP;
+    listen 80; # 或者 443，如果你使用 HTTPS 的话
+    # ssl on; 是否启用加密连接
+    # 如果你使用 HTTPS，还需要填写 ssl_certificate 和 ssl_certificate_key
+
+    location / { # 如果你希望通过子路径访问，此处修改为子路径，注意以 / 开头并以 / 结束
+        proxy_pass http://127.0.0.1:3000/;
+    }
+}
+然后进入 /etc/nginx/sites-enabled 中，执行 ln -s ../sites-available/配置文件名 启用这个配置文件。 最后重启 nginx 就好了，Ubuntu 下是 sudo service nginx restart
+
+
+
+nginx -t测试一下nginx是否正确安装。得到实际的nginx配置文件地址。一般是/etc/nginx/nginx.conf
+nginx的反向代理其实是一个虚拟主机，我们需要在/etc/nginx目录下新建一个vhosts目录，在vhosts目录中创建一个gogs.conf文
+server {
+    listen 80;
+    server_name gogs.gejiawen.com;
+    access_log /root/log/gogs.log main;
+    location / {
+        proxy_redirect off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_pass http://0.0.0.0:3000;
+    }
+    error_page 500 502 405 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}
+
+然后在默认的nginx配置文件（/etc/nginx/nginx.conf）中，加载虚拟主机的配置。如下，
+...
+
+http {
+    ...
+    # 包含所有虚拟主机的配置文件
+    include /etc/nginx/vhosts/*.conf;
+
+}
+
+最后，重新加载nginx的配置即可。
+ nginx -s reload
+
+ ---------------------------------------
+
+
+ 默认网站根目录为/usr/local/nginx/html，要将它改成/homw/www
+vi /usr/local/nginx/conf/nginx.conf
+将其中的
+
+        location / {
+            root   html;
+            index  index.php index.html index.htm;
+        }
+改为
+
+        location / {
+            root   /home/www;
+            index  index.php index.html index.htm;
+        }
+然后再将
+location ~ \.php$ {
+            root           html;
+            fastcgi_pass   127.0.0.1:9000;
+            fastcgi_index  index.php;
+            fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+            include        fastcgi_params;
+        }
+改为
+location ~ \.php$ {
+            root           /home/www;
+            fastcgi_pass   127.0.0.1:9000;
+            fastcgi_index  index.php;
+            fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+            include        fastcgi_params;
+        }
+然后重启nginx
+已经安装了samba，所以要将vi /etc/samba/smb.conf中的[public]下的path值改为
+path = /home/www/

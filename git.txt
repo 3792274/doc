@@ -1,0 +1,169 @@
+﻿
+
+//新建本地dev分支
+git checkout -b dev
+git push origin dev:dev
+git branch --set-upstream-to=origin/dev dev
+
+git branch -r     //查看远程分支
+git checkout -b dev origin/dev
+git branch --set-upstream-to=origin/release_2017-09-11 release_2017-09-11  
+
+
+git push origin :dev    //删除远程分支
+git branch -D Andrew    //删除本地分支
+git mergetool           //图形
+
+//删除远程分支
+git push origin --delete <branchName>
+
+
+ 
+合并，master到分支
+git add *
+git commit -am" "
+git checkout release_2017-09-11
+git merge master 
+git push origin  release_2017-09-11:release_2017-09-11  或者    
+git checkout master
+git push
+
+git checkout dev
+git pull
+git merge tony
+git push origin dev:dev
+
+git checkout master
+git merge dev 
+git push origin  master:master 
+
+git checkout release_2017-09-11
+git merge master 
+git push origin  release_2017-09-11:release_2017-09-11
+ 
+--------------------------------------------------------------
+
+git config user.name
+git config user.email
+
+git config --global user.name "your name"
+git config --global user.email "your email"
+
+记住密码
+git config --global credential.helper cache
+git config --global credential.helper 'cache --timeout=3600'
+
+
+
+修改密码后
+fatal: Authentication Failed
+git remote -v 
+git remote remove origin 
+git remote add origin   http://tony@172.28.200.11:8080/r/Pay.git   （git@github.com:user/repo.git ）  
+ 
+git branch --set-upstream-to=origin/release_2017-09-11 release_2017-09-11   git push --set-upstream origin master     git push -u origin master 
+git push origin  master:master
+
+
+
+Git 保存用户名和密码
+$ git config credential.helper store  #当git push的时候输入一次用户名和密码就会被记录
+$ man git | grep -C 5 password
+$ man git-credential-store
+这样保存的密码是明文的，保存在用户目录~的.git-credentials文件中
+$ file ~/.git-credentials
+$ cat ~/.git-credentials
+
+------------------------------------------------------------
+gitlab  Gitblit
+https://www.gitlab.com.cn/downloads/#centos7
+https://hub.docker.com/r/gitlab/gitlab-ce/
+https://docs.gitlab.com/omnibus/docker/
+
+
+docker pull gitlab/gitlab-ce:9.5.4-ce.0 
+docker pull gitlab/gitlab-ce:9.4.6-ce.0
+
+ 
+docker tag d4f259423416 10.20.1.240/gitlab/gitlab-ce:9.5.4-ce.0 
+docker push 10.20.1.240/gitlab/gitlab-ce:9.5.4-ce.0 
+docker rmi  10.20.1.240/gitlab/gitlab-ce:9.5.4-ce.0 
+
+
+-----------------------------------------------------------------
+Gogs 
+https://gogs.io/
+https://github.com/gogits/gogs/blob/master/README_ZH.md
+https://hub.docker.com/r/gogs/gogs/
+https://github.com/gogits/gogs/tree/master/docker
+https://gogs.io/docs/advanced/configuration_cheat_sheet.html
+
+docker pull gogs/gogs:0.11.29
+docker tag ef46d39abfce 10.20.1.240/gogs/gogs:0.11.29
+docker push 10.20.1.240/gogs/gogs:0.11.29
+docker rmi  10.20.1.240/gogs/gogs:0.11.29
+
+ 
+
+ 
+docker run -d -P  --name gogs  -v D:/MyGogsData:/data  -p 10022:22 -p 10080:3000    10.20.1.240/gogs/gogs:0.11.29
+
+--------------
+ Volume With Data Container
+ # Create data container
+docker run --name=gogs-data --entrypoint /bin/true gogs/gogs
+
+# Use `docker run` for the first time.
+docker run --name=gogs --volumes-from gogs-data -p 10022:22 -p 10080:3000 gogs/gogs
+-------------
+Using Docker 1.9 Volume Command
+# Create docker volume.
+$ docker volume create --name gogs-data
+
+# Use `docker run` for the first time.
+$ docker run --name=gogs -p 10022:22 -p 10080:3000 -v gogs-data:/data gogs/gogs
+
+-----------------------------------------------------------------
+解决
+error: The requested URL returned error: 403 Forbidden while accessing https://github.com/wangz/future.git/info/refs  
+
+set GIT_CURL_VERBOSE=1
+git push
+
+vim .git/config
+
+修改
+
+[remote "origin"]  
+    url = https://github.com/wangz/example.git  
+为：
+[remote "origin"]
+	url = https://346874738:Genius888@github.com/346874738/Mathsun.git
+再次git push，弹出框输入密码，即可提交
+
+--------------------------------------------------------------------
+git tag # 在控制台打印出当前仓库的所有标签
+git tag -l ‘v0.1.*’ # 搜索符合模式的标签
+
+创建轻量标签
+git tag v0.0.1
+
+创建附注标签
+git tag -a v0.0.1 -m “增加汇达支付”
+
+切换到标签
+git checkout [tagname]
+
+查看标签的版本信息
+git show v0.0.1
+
+删除标签
+git tag -d v0.0.1 
+
+
+git tag -a v0.0.1 9fbc3d0  #给指定的commit打标签
+git push origin v0.0.1 # 将v0.0.1标签提交到git服务器
+git push origin –tags # 将本地所有标签一次性提交到git服务器
+
+	
+git push origin --delete tag <tagname>  //删除远程tag

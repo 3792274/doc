@@ -1,0 +1,397 @@
+
+https://vmware.github.io/
+
+Harbor 是一个用于存储和分发 Docker 镜像的企业级 Registry 服务器
+Python 版本 2.7 及以上
+Docker Engine 版本 1.10 及以上
+Docker Compose 版本 1.6.0 及以上
+-----------------------------------------------------------
+
+http://jaminzhang.github.io/docker/Enterprise-class-private-Docker-Container-Registry-Harbor-deploying/
+https://github.com/vmware/harbor
+-------------------------------------------------------
+00.安装 Python 2.7更高版本 ，docker 及 Docker Compose
+   卸载：sudo yum -y remove docker  docker-common  docker-selinux docker-engine  && sudo yum remove docker-ce && sudo rm -rf /var/lib/docker
+   sudo yum install -y yum-utils  device-mapper-persistent-data  lvm2
+   sudo yum-config-manager  --add-repo  https://download.docker.com/linux/centos/docker-ce.repo
+   sudo yum install docker-ce  || yum list docker-ce.x86_64  --showduplicates | sort -r  && sudo yum install <FULLY-QUALIFIED-PACKAGE-NAME> || Docker 1.12.5
+   yum install  docker-selinux
+
+   yum list installed |grep dock
+
+
+   sudo systemctl enable docker
+   sudo systemctl start docker
+   
+   sudo curl -L https://github.com/docker/compose/releases/download/1.16.1/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+   sudo chmod +x /usr/local/bin/docker-compose
+   docker-compose --version
+   sudo rm /usr/local/bin/docker-compose
+
+
+1.下载安装包
+	cd /usr/local
+	wget https://github.com/vmware/harbor/releases/download/v1.1.2/harbor-offline-installer-v1.1.2.tgz
+	wget  https://github.com/vmware/harbor/releases/download/v1.2.0/harbor-offline-installer-v1.2.0.tgz
+	tar xvf harbor-offline-installer-v1.1.2.tgz
+	cd harbor/
+
+
+2.配置：
+vim harbor.cfg
+	hostname = 10.20.1.10
+	ui_url_protocol = https
+	db_password = 12369
+    ssl_cert = /root/cert/10.20.1.10.crt
+    ssl_cert_key = /root/cert/10.20.1.10.key
+    harbor_admin_password = 12369
+
+
+
+3.生成证书
+cd ~ && mkdir -p ca && cd ca
+openssl req \
+    -newkey rsa:4096 -nodes -sha256 -keyout ca.key \
+    -x509 -days 365 -out ca.crt
+
+
+openssl req \
+    -newkey rsa:4096 -nodes -sha256 -keyout 10.20.1.10.key \
+    -out 10.20.1.10.csr
+
+------------------------域名
+openssl x509 -req -days 365 -in 10.20.1.10.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out 10.20.1.10.crt
+
+
+------------------------ip
+echo subjectAltName = IP:10.20.1.10 > extfile.cnf
+openssl x509 -req -days 36500 -in 10.20.1.10.csr -CA ca.crt -CAkey ca.key -CAcreateserial -extfile extfile.cnf -out 10.20.1.10.crt
+
+
+4.mkdir -p /root/cert/
+	cp 10.20.1.10.crt /root/cert/
+	cp 10.20.1.10.key /root/cert/ 
+
+5.安装docker及 docker-compose(1.7.1+)  -->https://github.com/docker/compose/releases/tag/1.12.0 || https://yeasy.gitbooks.io/docker_practice/content/compose/intro.html  || https://yeasy.gitbooks.io/docker_practice/content/compose/install.html
+curl -L https://github.com/docker/compose/releases/download/1.12.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+docker-compose version
+
+
+6.docker已经在运行中 
+cd /root/harbor && ./prepare && docker-compose down  &&    docker-compose up -d
+
+7.如果没有在运行中
+cd /root/harbor &&  ./install.sh
+
+[root@localhost harbor]# docker ps
+CONTAINER ID        IMAGE                              COMMAND                  CREATED             STATUS              PORTS                                                              NAMES
+28953859e80a        vmware/harbor-jobservice:v1.1.2    "/harbor/harbor_jobse"   19 seconds ago      Up 11 seconds                                                                          harbor-jobservice
+6cf2cee8f1a0        vmware/nginx:1.11.5-patched        "nginx -g 'daemon off"   20 seconds ago      Up 12 seconds       0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp, 0.0.0.0:4443->4443/tcp   nginx
+07f98e744e55        vmware/harbor-ui:v1.1.2            "/harbor/harbor_ui"      27 seconds ago      Up 20 seconds                                                                          harbor-ui
+f95bc4608e8d        vmware/registry:2.6.1-photon       "/entrypoint.sh serve"   35 seconds ago      Up 27 seconds       5000/tcp                                                           registry
+f9f86cec2ce5        vmware/harbor-adminserver:v1.1.2   "/harbor/harbor_admin"   35 seconds ago      Up 28 seconds                                                                          harbor-adminserver
+22cec262e128        vmware/harbor-db:v1.1.2            "docker-entrypoint.sh"   37 seconds ago      Up 29 seconds       3306/tcp                                                           harbor-db
+9aefb2b87753        vmware/harbor-log:v1.1.2           "/bin/sh -c 'crond &&"   41 seconds ago      Up 36 seconds       127.0.0.1:1514->514/tcp                                            harbor-log
+
+测试访问
+https://10.20.1.10/harbor/projects
+
+
+
+8.在客户端增加证书
+mkdir -p /etc/docker/certs.d/10.20.1.10/  && cp /root/ca/ca.crt  /etc/docker/certs.d/10.20.1.10/ && cp /root/ca/10.20.1.10.crt /etc/pki/ca-trust/source/anchors/10.20.1.10.crt  && update-ca-trust
+docker login 10.20.1.10
+
+9.为其他机器客户端增加证书
+cd /root/ca   &&  ssh -p 22 root@10.10.14.84  'mkdir -p /etc/docker/certs.d/10.20.1.240/'  &&  scp   /root/ca/ca.crt   root@10.10.14.84:/etc/docker/certs.d/10.20.1.240/   && scp  /root/ca/10.20.1.240.crt   root@10.10.14.84:/etc/pki/ca-trust/source/anchors/10.20.1.240.crt &&  ssh -p 22 root@10.10.14.84  'update-ca-trust' 
+
+cd /root/ca   &&  ssh -p 22 root@10.10.14.95  'mkdir -p /etc/docker/certs.d/10.20.1.240/'  &&  scp   /root/ca/ca.crt   root@10.10.14.95:/etc/docker/certs.d/10.20.1.240/   && scp  /root/ca/10.20.1.240.crt   root@10.10.14.95:/etc/pki/ca-trust/source/anchors/10.20.1.240.crt &&  ssh -p 22 root@10.10.14.95  'update-ca-trust' 
+
+
+10.windows 如下：
+C:\ProgramData\Docker\certs.d\10.20.1.10\ca.crt  重启docker
+
+
+----------------------------------------------------------------------------------------------------------------------------
+在私有仓库上传、下载、搜索镜像
+ 
+docker tag f66f4bd9b894  10.20.1.240/rhel7/pod-infrastructure:latest
+docker push 10.20.1.240/rhel7/pod-infrastructure
+
+docker tag c73c7527c03a  10.20.1.240/mysql/mysql:latest
+docker push 10.20.1.240/mysql/mysql
+
+docker tag fc5e302d8309  10.20.1.240/google_containers/k8s-dns-sidecar-amd64:1.14.1
+docker push 10.20.1.240/google_containers/k8s-dns-sidecar-amd64:1.14.1
+docker rmi 10.20.1.240/google_containers/k8s-dns-sidecar-amd64:1.14.1
+
+
+docker tag f8363dbf447b 10.20.1.240/google_containers/k8s-dns-kube-dns-amd64:1.14.1
+docker push 10.20.1.240/google_containers/k8s-dns-kube-dns-amd64:1.14.1
+docker rmi 10.20.1.240/google_containers/k8s-dns-kube-dns-amd64:1.14.1
+
+
+docker tag 1091847716ec 10.20.1.240/google_containers/k8s-dns-dnsmasq-nanny-amd64:1.14.1
+docker push 10.20.1.240/google_containers/k8s-dns-dnsmasq-nanny-amd64:1.14.1
+docker rmi 10.20.1.240/google_containers/k8s-dns-dnsmasq-nanny-amd64:1.14.1
+
+
+
+docker tag c8c29d842c09 10.20.1.240/nginx/nginx:1.9
+docker push 10.20.1.240/nginx/nginx:1.9
+docker rmi 10.20.1.240/nginx/nginx:1.9
+
+
+
+
+docker tag 416701f962f2 10.20.1.240/google_containers/kubernetes-dashboard-amd64:v1.6.0
+docker push 10.20.1.240/google_containers/kubernetes-dashboard-amd64:v1.6.0
+docker rmi 10.20.1.240/google_containers/kubernetes-dashboard-amd64:v1.6.0
+
+
+           
+
+docker tag a1956d2a1a16 10.20.1.240/google_containers/heapster-grafana-amd64:4.0.2
+docker push 10.20.1.240/google_containers/heapster-grafana-amd64:4.0.2
+docker rmi  10.20.1.240/google_containers/heapster-grafana-amd64:4.0.2
+
+
+docker tag 4ff6ad0ca64c 10.20.1.240/google_containers/heapster-amd64:v1.3.0-beta.1
+docker push 10.20.1.240/google_containers/heapster-amd64:v1.3.0-beta.1
+docker rmi  10.20.1.240/google_containers/heapster-amd64:v1.3.0-beta.1
+
+
+
+docker tag d3fccbedd180 10.20.1.240/google_containers/heapster-influxdb-amd64:v1.1.1
+docker push 10.20.1.240/google_containers/heapster-influxdb-amd64:v1.1.1
+docker rmi  10.20.1.240/google_containers/heapster-influxdb-amd64:v1.1.1
+
+
+
+
+
+
+docker pull gcr.io/google_containers/elasticsearch:v2.4.1-2
+docker tag 6941e43df81a 10.20.1.240/google_containers/elasticsearch:v2.4.1-2
+docker push 10.20.1.240/google_containers/elasticsearch:v2.4.1-2
+docker rmi  10.20.1.240/google_containers/elasticsearch:v2.4.1-2
+
+
+
+
+docker pull gcr.io/google_containers/fluentd-elasticsearch:1.22
+docker tag 7896bdf952bf 10.20.1.240/google_containers/fluentd-elasticsearch:1.22
+docker push 10.20.1.240/google_containers/fluentd-elasticsearch:1.22
+docker rmi  10.20.1.240/google_containers/fluentd-elasticsearch:1.22
+
+
+
+docker pull  gcr.io/google_containers/kibana:v4.6.1-1
+docker tag 37cd73c06727 10.20.1.240/google_containers/kibana:v4.6.1-1
+docker push 10.20.1.240/google_containers/kibana:v4.6.1-1
+docker rmi  10.20.1.240/google_containers/kibana:v4.6.1-1
+
+
+ 
+
+
+docker pull  mongo:3.4.8
+docker tag c07b136da935 10.20.1.240/mongo/mongo:3.4.8
+docker push 10.20.1.240/mongo/mongo:3.4.8
+docker rmi  10.20.1.240/mongo/mongo:3.4.8
+
+
+docker pull redis:4.0.1
+docker tag d4f259423416 10.20.1.240/redis/redis:4.0.1
+docker push 10.20.1.240/redis/redis:4.0.1
+docker rmi  10.20.1.240/redis/redis:4.0.1
+
+
+
+现在可以到另外一台机器去下载这个镜像。
+docker pull 10.20.1.240/nginx/nginx:latest
+docker pull 10.20.1.240/rhel7/pod-infrastructure:latest
+
+将容器更新提交到镜像：
+docker commit -m "Add vim"  69e873e0c48e 10.20.1.240/nginx/nginx:latest
+
+
+我们要从v1升级到v2，首先我们将导入的v2镜像强制重命名为image:latest
+docker tag -f image:v2 image:latest
+
+删除tag
+docker rmi 10.20.1.240:5000/mysql/mysql
+
+
+docker tag 5014fe3ba982 10.20.1.240/vmware/admiral:latest
+docker push 10.20.1.240/vmware/admiral:latest
+
+
+-----------------------------------------------------------------------------------------------------------
+
+8.生命周期管理
+
+$ sudo docker-compose stop
+Stopping nginx ... done
+Stopping harbor-jobservice ... done
+Stopping harbor-ui ... done
+Stopping harbor-db ... done
+Stopping registry ... done
+Stopping harbor-log ... done
+
+
+
+$ sudo docker-compose start
+Starting log ... done
+Starting ui ... done
+Starting mysql ... done
+Starting jobservice ... done
+Starting registry ... done
+Starting proxy ... done
+
+
+$ sudo docker-compose down -v
+$ vim harbor.cfg
+$ sudo prepare
+$ sudo docker-compose up -d
+
+
+删除容器，同时保留图像数据和Harbor的数据库文件在文件系统上：
+$ sudo docker-compose down -v
+
+删除港口的数据库和图像数据（为了干净的重新安装）：
+$ rm -r / data / database
+$ rm -r / data / registry
+
+
+
+ $ sudo docker-compose ps
+        Name                     Command               State                    Ports                   
+  -----------------------------------------------------------------------------------------------------
+  harbor-db           docker-entrypoint.sh mysqld      Up      3306/tcp                                 
+  harbor-jobservice   /harbor/harbor_jobservice        Up                                               
+  harbor-log          /bin/sh -c crond && rsyslo ...   Up      127.0.0.1:1514->514/tcp                    
+  harbor-ui           /harbor/harbor_ui                Up                                               
+  nginx               nginx -g daemon off;             Up      0.0.0.0:443->443/tcp, 0.0.0.0:80->80/tcp 
+  registry            /entrypoint.sh serve /etc/ ...   Up      5000/tcp                            
+
+
+
+[root@localhost ~]# docker images
+REPOSITORY                  TAG                 IMAGE ID            CREATED             SIZE
+vmware/harbor-jobservice    v1.1.2              ac332f9bd31c        11 weeks ago        162.9 MB
+vmware/harbor-ui            v1.1.2              803897be484a        11 weeks ago        182.9 MB
+vmware/harbor-adminserver   v1.1.2              360b214594e7        11 weeks ago        141.6 MB
+vmware/harbor-db            v1.1.2              6f71ee20fe0c        11 weeks ago        328.5 MB
+vmware/registry             2.6.1-photon        0f6c96580032        3 months ago        150.3 MB
+vmware/harbor-notary-db     mariadb-10.1.10     64ed814665c6        4 months ago        324.1 MB
+vmware/nginx                1.11.5-patched      8ddadb143133        4 months ago        199.2 MB
+vmware/notary-photon        signer-0.5.0        b1eda7d10640        5 months ago        155.7 MB
+vmware/notary-photon        server-0.5.0        6e2646682e3c        5 months ago        156.9 MB
+vmware/harbor-log           v1.1.2              9c46a7b5e517        6 months ago        192.4 MB
+photon                      1.0                 e6e4e4a2ba1b        14 months ago       127.5 MB
+
+
+
+----------------------------------------------------------------------------------------------------------
+
+配置端口
+/root/harbor/docker-compose.yml
+
+ports:
+      - 8888:80
+      - 443:443
+
+hostname = 192.168.0.2:8888
+
+
+
+
+
+docker --insecure-registry=docker-registry.example.com:8080 login https://docker-registry.example.com:8080
+
+
+---------------------------------------------------------------------------------------------------------
+另一个VM图形界面
+docker run -d -p 8282:8282 --name admiral vmware/admiral
+
+
+
+----------------------------------------------------------
+docker 官方私有仓库--https://yeasy.gitbooks.io/docker_practice/content/repository/local_repo.html
+ sudo docker run -d -p 5000:5000 registry
+ 
+
+
+例如配置镜像存储到 Amazon S3 服务。
+ $ sudo docker run \
+         -e SETTINGS_FLAVOR=s3 \
+         -e AWS_BUCKET=acme-docker \
+         -e STORAGE_PATH=/registry \
+         -e AWS_KEY=AKIAHSHB43HS3J92MXZ \
+         -e AWS_SECRET=xdDowwlK7TJajV1Y7EoOZrmuPEJlHYcNP2k4j49T \
+         -e SEARCH_BACKEND=sqlalchemy \
+         -p 5000:5000 \
+         registry
+
+指定本地路径（如 /home/user/registry-conf ）下的配置文件
+ $ sudo docker run -d -p 5000:5000 -v /home/user/registry-conf:/registry-conf -e DOCKER_REGISTRY_CONFIG=/registry-conf/config.yml registry        
+
+ 仓库会被创建在容器的 /var/lib/registry（v1 中是/tmp/registry）下。可以通过 -v 参数来将镜像文件存放在本地的指定路径
+ $ sudo docker run -d -p 5000:5000 -v /opt/data/registry:/var/lib/registry registry
+
+
+ $ sudo yum install -y python-devel libevent-devel python-pip gcc xz-devel
+$ sudo python-pip install docker-registry
+
+也可以从 docker-registry 项目下载源码进行安装。
+$ sudo apt-get install build-essential python-dev libevent-dev python-pip libssl-dev liblzma-dev libffi-dev
+$ git clone https://github.com/docker/distribution
+$ cd distribution
+$ sudo docker build .
+
+启动运行registry的容器
+$ sudo docker run -d -p 5000:5000 --restart=always --name registry ${IMAGE_ID}
+
+------------------------------------------------
+在kubenets中使用
+
+docker login 10.20.1.240
+
+kubectl get namespaces
+kubectl create namespace docker-system
+
+kubectl create secret docker-registry docker-secret-name --namespace=docker-system \
+--docker-server=10.20.1.240 --docker-username=admin \
+--docker-password=12369 --docker-email=3792274@qq.com
+
+  
+
+[root@m1 ~]# kubectl get secret docker-secret-name --namespace=docker-system -o yaml
+apiVersion: v1
+data:
+  .dockercfg: eyIxMC4yMC4xLjI0MCI6eyJ1c2VybmFtZSI6ImFkbWluIiwicGFzc3dvcmQiOiIxMjM2OSIsImVtYWlsIjoiMzc5MjI3NEBxcS5jb20iLCJhdXRoIjoiWVdSdGFXNDZNVEl6TmprPSJ9fQ==
+kind: Secret
+metadata:
+  creationTimestamp: 2017-09-05T09:54:46Z
+  name: docker-secret-name
+  namespace: docker-system
+  resourceVersion: "24624"
+  selfLink: /api/v1/namespaces/docker-system/secrets/docker-secret-name
+  uid: 400b468c-9220-11e7-8408-00155df0011b
+type: kubernetes.io/dockercfg
+
+  
+
+kubectl create serviceaccount  docker-accounts  --namespace=docker-system -o yaml
+kubectl get serviceaccounts docker-accounts --namespace=docker-system -o yaml
+
+
+3.在pod中使用
+spec:
+  serviceAccount:docker-accounts
+  containers:
+  - name:
+    image:
+    imagesPullPolicy:Always

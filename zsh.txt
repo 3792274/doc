@@ -1,0 +1,6 @@
+，多谢，我解决了，我是删除了～/.zcompdump 然后执行exec zsh
+
+cat /dev/null > ~/.bash_history && history -c && exit
+
+
+history -c && history -w& & exit

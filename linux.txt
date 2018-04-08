@@ -1,0 +1,712 @@
+https://jalena.bcsytv.com/archives/1701
+nohup java -jar math-sun-core-1.0.jar > math-sun-core-1.0.log 2>&1 &
+
+cat /etc/system-release
+
+
+
+df -h
+lsblk
+Java HotSpot(TM) 64-Bit Server VM warning: Insufficient space for shared memory file:
+   62530
+Try using the -Djava.io.tmpdir= option to select an alternate temp location.
+
+
+ sysctl -a | grep port
+
+ 
+[root@localhost pay-core]# df -h
+Filesystem           Size  Used Avail Use% Mounted on
+/dev/mapper/cl-root   37G   37G   20K 100% /
+devtmpfs              16G     0   16G   0% /dev
+tmpfs                 16G     0   16G   0% /dev/shm
+tmpfs                 16G  113M   16G   1% /run
+tmpfs                 16G     0   16G   0% /sys/fs/cgroup
+/dev/sda1           1014M  211M  804M  21% /boot
+tmpfs                3.2G     0  3.2G   0% /run/user/0
+
+
+find / -size +100M -exec ls -lh {} \;
+
+
+-------------------------------------------
+自动开启网络
+
+nmcli d
+nmtui
+
+
+cd /etc/sysconfig/network-scripts
+
+ifconfig
+
+vim ifcfg-enp5s0 
+
+TYPE=Ethernet
+BOOTPROTO=dhcp
+DEFROUTE=yes
+PEERDNS=yes
+PEERROUTES=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_PEERDNS=yes
+IPV6_PEERROUTES=yes
+IPV6_FAILURE_FATAL=no
+IPV6_ADDR_GEN_MODE=stable-privacy
+NAME=eth0
+UUID=9a2d374d-9d1f-415d-8bc2-e92674f18802
+DEVICE=eth0
+ONBOOT=yes
+ 
+------------------
+TYPE=Ethernet
+BOOTPROTO=none
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_FAILURE_FATAL=no
+IPV6_ADDR_GEN_MODE=stable-privacy
+NAME=eth0
+UUID=268879f8-4d24-4a2a-a0e5-2353ceaf47f3
+DEVICE=eth0
+ONBOOT=yes
+DNS1=122.55.37.130
+IPADDR=10.20.1.252
+PREFIX=24
+GATEWAY=10.20.1.254
+IPV6_PEERDNS=yes
+IPV6_PEERROUTES=yes
+IPV6_PRIVACY=no
+ZONE=public
+
+
+service network restart
+yum install -y net-tools\*
+
+yum upgrade -y
+yum update -y
+
+
+
+--------------------------------------------
+
+rpm -qa | grep java
+tzdata-java-2017b-1.el7.noarch
+javapackages-tools-3.4.1-11.el7.noarch
+python-javapackages-3.4.1-11.el7.noarch
+java-1.7.0-openjdk-headless-1.7.0.141-2.6.10.1.el7_3.x86_64
+java-1.8.0-openjdk-headless-1.8.0.141-1.b16.el7_3.x86_64
+
+rpm -e --nodeps java-1.7.0-openjdk-headless-1.7.0.141-2.6.10.1.el7_3.x86_64
+rpm -e --nodeps java-1.8.0-openjdk-headless-1.8.0.141-1.b16.el7_3.x86_64
+--------------
+rpm -qa | grep gcj
+
+-------------
+rpm -qa | grep jdk
+java-1.7.0-openjdk-headless-1.7.0.141-2.6.10.1.el7_3.x86_64
+java-1.8.0-openjdk-headless-1.8.0.141-1.b16.el7_3.x86_64
+
+yum -y remove java java-1.7.0-openjdk-headless-1.7.0.141-2.6.10.1.el7_3.x86_64
+yum -y remove java java-1.8.0-openjdk-headless-1.8.0.141-1.b16.el7_3.x86_64
+
+
+yum remove java-1.6.0-openjdk
+yum remove java-1.7.0-openjdk
+
+--------------------------------------------
+
+JDK下载和安装Oracle Java JDK
+Become root by running su and entering the super-user password.
+Change to the directory in which you want to install. Type:
+cd directory_path_name
+For example, to install the software in the /usr/java/ directory, Type:
+cd /usr/java
+
+Uninstall any earlier installations of the Java packages.
+rpm -e package_name
+
+Install the package. 
+wget --no-cookies --no-check-certificate --header "Cookie: gpw_e24=http%3A%2F%2Fwww.oracle.com%2F; oraclelicense=accept-securebackup-cookie" "http://download.oracle.com/otn-pub/java/jdk/8u161-b12/2f38c3b165be4555a1fa6e98c45e0808/jdk-8u161-linux-x64.rpm?AuthParam=1517150222_4383e3313291fdc591e06e4f7bddb9a6"
+rpm -ivh jdk-8u144-linux-x64.rpm
+
+To upgrade a package: 
+rpm -Uvh jre-8u73-linux-x64.rpm 
+
+Delete the .rpm file if you want to save disk space.
+Exit the root shell. No need to reboot.
+
+
+-------------------------------------------
+传递文件
+1、查看是否安装了scp，如未安装，可运行yum install scp即可。
+2、运行远程拷贝命令scp  ./文件名  root@ip:/远程主机文件安放目录。
+3、输入远程主机的root密码即可。
+
+-------------------------------------------
+maven
+http://maven.apache.org/download.cgi
+#tar -zxvf apache-maven-3.3.3-bin.tar.gz
+mv apache-maven-3.3.9 /usr/local/webserver/
+vi /etc/profile
+export MAVEN_HOME=/usr/local/webserver/apache-maven-3.3.9
+export PATH=${MAVEN_HOME}/bin:${PATH}
+soucre /etc/profile
+mvn -v
+ln -s  /opt/APP/apache-maven-3.5.0/bin/mvn /usr/local/bin/mvn
+
+
+$ cd /opt
+$ wget http://www-eu.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
+$ sudo tar xzf apache-maven-3.3.9-bin.tar.gz
+$ sudo ln -s apache-maven-3.3.9 maven
+sudo vi /etc/profile.d/maven.sh
+export M2_HOME=/opt/APP/apache-maven-3.5.0
+export PATH=${M2_HOME}/bin:${PATH}
+$ source /etc/profile.d/maven.sh
+$ mvn -version 
+
+-----------------------------------
+打包：
+# tar -czvf ./apache-maven-3.5.0.tar.gz ./apache-maven-3.5.0           <==打包后，以 gzip 压缩
+# tar -xzvf ./apache-maven-3.5.0.tar.gz  /opt/APP/apache-maven-3.5.0   <===解包
+
+--------------------------------
+ssh免密码登陆
+ssh-keygen                                      #生成密钥   ~/.ssh/authorized_keys
+ssh-copy-id -i ~/.ssh/id_rsa.pub 192.168.1.101    #复制密钥到远程主机
+ssh root@10.20.1.201                            #免密码登陆远程主机
+
+
+ ssh-keygen -t rsa -P ''
+ $ IP=(172.30.33.89 172.30.33.90 172.30.33.91 172.30.33.92 172.30.33.93 172.30.33.94)
+ for x in ${IP[*]}; do ssh-copy-id -i ~/.ssh/id_rsa.pub $x; done
+
+
+
+-----------------------------
+SCP
+
+ scp local_path/file_name    user_name@remote_ip:remote_path/     #1.上传本机文件到远程服务器
+ scp -r local_path/fold_name user_name@remote_ip:remote_path/     #2.上传本机目录到远程服务器
+ scp user_name@remote_ip:remote_path/file_name local_path/        #3.拷贝远程服务器文件到本机
+ scp -r user_name@remote_ip:remote_path/folder_name local_path/   #4.拷贝远程服务器目录到本机
+
+-----------------------------
+SSH 远程执行命令
+----pay-rest
+ssh -p 22 root@10.20.1.202  'rm -rf  /opt/APP/Pay && mkdir -p /opt/APP/Pay/pay-rest/'  
+scp -r /var/jenkins_home/workspace/Pay/pay-rest/  root@10.20.1.202:/opt/APP/Pay
+ssh -p 22 root@10.20.1.202  'rm -rf /opt/APP/Pay/pay-rest/src'  
+ssh -p 22 root@10.20.1.202  'docker stop pay-rest && docker rm pay-rest'
+ssh -p 22 root@10.20.1.202  'docker rmi -f pay-rest/pay'
+ssh -p 22 root@10.20.1.202  'cd /opt/APP/Pay/pay-rest && docker build --no-cache=true --rm=true  -t pay-rest/pay:latest  /opt/APP/Pay/pay-rest' 
+ssh -p 22 root@10.20.1.202  'docker run -d -p  9091:9091   --name pay-rest  -v /etc/localtime:/etc/localtime:ro  pay-rest/pay --spring.profiles.active=dev --logging.level.dc.pay=DEBUG --server.port=9091  --eureka.instance.ip-address=10.20.1.202  --eureka.instance.instance-id=10.20.1.202:9091'
+
+----pay-admin
+ssh -p 22 root@10.20.1.201  'rm -rf  /opt/APP/Pay && mkdir -p /opt/APP/Pay/pay-spring-boot-admin/'  
+scp -r /var/jenkins_home/workspace/Pay/pay-rest/  root@10.20.1.201:/opt/APP/Pay
+ssh -p 22 root@10.20.1.201  'rm -rf /opt/APP/Pay/pay-spring-boot-admin/src'  
+ssh -p 22 root@10.20.1.201  'docker stop pay-spring-boot-admin && docker rm pay-spring-boot-admin'
+ssh -p 22 root@10.20.1.201  'docker rmi -f pay-spring-boot-admin/pay'
+ssh -p 22 root@10.20.1.201  'cd /opt/APP/Pay/pay-spring-boot-admin && docker build --no-cache=true --rm=true  -t pay-spring-boot-admin/pay:latest  /opt/APP/Pay/pay-spring-boot-admin' 
+ssh -p 22 root@10.20.1.201  'docker run -d -p  9091:9091   --name pay-spring-boot-admin  -v /etc/localtime:/etc/localtime:ro  pay-spring-boot-admin/pay --logging.level.dc.pay=DEBUG --server.port=9091  --eureka.instance.ip-address=10.20.1.201  --eureka.instance.instance-id=10.20.1.201:9091'
+
+
+-----pay-core
+ssh -p 22 root@10.20.1.203  'rm -rf  /opt/APP/Pay && mkdir -p /opt/APP/Pay/pay-core/'  
+scp -r /var/jenkins_home/workspace/Pay/pay-core/  root@10.20.1.203:/opt/APP/Pay
+ssh -p 22 root@10.20.1.203  'rm -rf /opt/APP/Pay/pay-core/src'  
+ssh -p 22 root@10.20.1.203  'docker stop pay-core && docker rm pay-core'
+ssh -p 22 root@10.20.1.203  'docker rmi -f pay-core/pay'
+ssh -p 22 root@10.20.1.203  'cd /opt/APP/Pay/pay-core && docker build --no-cache=true --rm=true  -t pay-core/pay:latest  /opt/APP/Pay/pay-core' 
+ssh -p 22 root@10.20.1.203  'docker run -d -p  9091:9091   --name pay-core  -v /etc/localtime:/etc/localtime:ro  pay-core/pay --spring.profiles.active=dev --logging.level.dc.pay=DEBUG --server.port=9091  --eureka.instance.ip-address=10.20.1.203  --eureka.instance.instance-id=10.20.1.203:9091'
+
+----------------------------------
+sysctl -a | grep port
+
+/etc/init.d/iptables start  
+iptables -A INPUT -p tcp -m tcp --dport 21 -j ACCEPT  //开放21端口    添加filter表
+iptables -t nat -A POSTROUTING -s 192.168.10.0/24 -j MASQUERADE   添加nat表  将源地址是 192.168.10.0/24 的数据包进行地址伪装
+iptables -L -n --line-number  
+iptables -L -n --line-number |grep 21 //--line-number可以显示规则序号，在删除的时候比较方便  
+iptables -t nat -vnL POSTROUTING --line-number  
+
+[root@linux ~]# iptables -D INPUT 3  //删除input的第3条规则    
+[root@linux ~]# iptables -t nat -D POSTROUTING 1  //删除nat表中postrouting的第一条规则    
+[root@linux ~]# iptables -F INPUT   //清空 filter表INPUT所有规则    
+[root@linux ~]# iptables -F    //清空所有规则    
+[root@linux ~]# iptables -t nat -F POSTROUTING   //清空nat表POSTROUTING所有规则  
+
+iptables -P INPUT ACCEPT   
+iptables -P OUTPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -t nat -F
+iptables -F  
+iptables --flush
+iptables -tnat --flush
+service iptables save
+service iptables restart
+
+ yum install -y conntrack-tools
+
+-----------------
+
+
+
+防火墙 cat /etc/sysconfig/iptables
+iptables -L -n
+netstat -anltp
+netstat -anp
+
+yum install -y lsof
+lsof -i tcp:80
+netstat -ntlp
+
+
+systemctl stop firewalld
+systemctl mask firewalld
+yum install -y iptables-services
+systemctl enable iptables
+systemctl start  iptables
+service iptables save 或者  /usr/libexec/iptables/iptables.init save
+
+service iptables status 查看iptables状态
+
+
+iptables -I INPUT -p tcp --dport 3306 -j ACCEPT  增加端口
+service iptables save
+service iptables restart
+
+
+ 
+----------批量添加端口
+vim /etc/sysconfig/iptables --增加如下， 
+-A INPUT -p tcp -m tcp --dport 1:65534 -j ACCEPT
+service iptables restart  后重启
+
+ 测试js
+curl https://raw.githubusercontent.com/creationix/nvm/v0.30.2/install.sh | bash
+source ~/.bashrc
+nvm install v8.4.0
+
+
+
+var http = require('http');
+
+var handleRequest = function(request, response) {
+  console.log('Received request for URL: ' + request.url);
+  response.writeHeader(200 , {"Content-Type" : "text/html; charset=utf-8"});
+  response.end('Hello World!');
+};
+var www = http.createServer(handleRequest);
+www.listen(5566);
+
+
+curl -H "Authorization: Bearer #token#" -XPOST http://127.0.0.1:8000/notifications/refresh
+
+-------------
+
+
+
+----开发指定服务
+netstat -tpnl|grep java|awk '{printf $4}'|sed "s/:::/\\n/g"|grep -v "^$" >ports.txt
+netstat -tpnl|grep -w :::|awk '{printf $4}'|sed "s/:::/\\n/g"|sed "s/::1:/\\n/g"|grep -v "^$" >ports.txt
+
+while read PORT; do echo "-A INPUT -m state --state NEW -m tcp -p tcp --dport $PORT -j ACCEPT" ; done < ports.txt
+
+while read PORT; do echo "-A INPUT -m state --state NEW -m tcp -p tcp --dport $PORT -j ACCEPT" iptables -I INPUT -p tcp --dport $PORT -j ACCEPT ; done < ports.txt
+while read PORT; do echo "-A INPUT -m state --state NEW -m tcp -p tcp --dport $PORT -j ACCEPT" &&  iptables -I INPUT -p tcp --dport $PORT -j ACCEPT ; done < ports.txt
+
+ 
+
+
+
+#开放全部端口
+iptables -P INPUT ACCEPT  && iptables -P OUTPUT ACCEPT  && service iptables save && service iptables restart && history -cw && echo > ./.bash_history  && echo > /var/log/wtmp  && echo > /var/log/btmp   
+
+
+1、开启端口（以80端口为例）
+       方法一：
+          /sbin/iptables -I INPUT -p tcp --dport 80 -j ACCEPT   写入修改
+          /etc/init.d/iptables save   保存修改
+         service iptables restart    重启防火墙，修改生效
+        方法二：
+        vi /etc/sysconfig/iptables  打开配置文件加入如下语句:
+        -A INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT   重启防火墙，修改完成 
+2、关闭端口
+     方法一：
+         /sbin/iptables -I INPUT -p tcp --dport 80 -j DROP   写入修改
+          /etc/init.d/iptables save   保存修改
+         service iptables restart    重启防火墙，修改生效
+    方法二：
+        vi /etc/sysconfig/iptables  打开配置文件加入如下语句:
+        -A INPUT -p tcp -m state --state NEW -m tcp --dport 80 -j DROP   重启防火墙，修改完成
+3、查看端口状态
+       /etc/init.d/iptables status
+
+
+---------------------------
+
+莫小安
+CentOS7使用firewalld打开关闭防火墙与端口
+
+1、firewalld的基本使用
+启动： systemctl start firewalld
+查看状态： systemctl status firewalld 
+停止： systemctl disable firewalld
+禁用： systemctl stop firewalld
+ 
+2.systemctl是CentOS7的服务管理工具中主要的工具，它融合之前service和chkconfig的功能于一体。
+启动一个服务：systemctl start firewalld.service
+关闭一个服务：systemctl stop firewalld.service
+重启一个服务：systemctl restart firewalld.service
+显示一个服务的状态：systemctl status firewalld.service
+在开机时启用一个服务：systemctl enable firewalld.service
+在开机时禁用一个服务：systemctl disable firewalld.service
+查看服务是否开机启动：systemctl is-enabled firewalld.service
+查看已启动的服务列表：systemctl list-unit-files|grep enabled
+查看启动失败的服务列表：systemctl --failed
+
+3.配置firewalld-cmd
+
+查看版本： firewall-cmd --version
+查看帮助： firewall-cmd --help
+显示状态： firewall-cmd --state
+查看所有打开的端口： firewall-cmd --zone=public --list-ports
+更新防火墙规则： firewall-cmd --reload
+查看区域信息:  firewall-cmd --get-active-zones
+查看指定接口所属区域： firewall-cmd --get-zone-of-interface=eth0
+拒绝所有包：firewall-cmd --panic-on
+取消拒绝状态： firewall-cmd --panic-off
+查看是否拒绝： firewall-cmd --query-panic
+ 
+那怎么开启一个端口呢
+添加
+firewall-cmd --zone=public --add-port=80/tcp --permanent    （--permanent永久生效，没有此参数重启后失效）
+重新载入
+firewall-cmd --reload
+查看
+firewall-cmd --zone= public --query-port=80/tcp
+删除
+firewall-cmd --zone= public --remove-port=80/tcp --permanent
+ 
+
+
+ 
+
+---------------------------
+历史命令
+.bash_history
+export HISTSIZE=5 && history -cw && echo > ./.bash_history  && echo > /var/log/wtmp  && echo > /var/log/btmp   
+ 
+--------------------------
+设置命令别名
+alias cls="clear"   #单次有效
+
+vim  /etc/bashrc  -》 alias cls='clear'   -> . ~/.bashrc
+
+alias cls='clear'
+alias vi='vim'
+alias ll='ls -alsh'
+--------------------------
+时间同步 --http://www.jianshu.com/p/fb32239ccf2b
+1.ubuntu 手动设置时区
+  date -R
+  tzselect
+  cp /usr/share/zoneinfo/Asia/Shanghai  /etc/localtime
+  ntpdate time.windows.com
+
+  sudo date -s MM/DD/YY //修改日期
+  sudo date -s hh:mm:ss //修改时间
+  sudo hwclock --systohc //修改硬件CMOS的时间，后面时间还是不准
+2.centos
+ # 安装
+  yum install -y chrony
+# 启用
+  systemctl start chronyd
+  systemctl enable chronyd
+# 设置亚洲时区
+  timedatectl set-timezone Asia/Shanghai
+# 启用NTP同步
+  timedatectl set-ntp yes
+
+--------------------------
+设置内存
+JAVA_OPTS="-Xms1024m -Xmx2048m -Xss1024K  -XX:MetaspaceSize=512m -XX:MaxMetaspaceSize=1024m"
+netstat -anp | grep java | grep 5005|awk '{print $7}'|cut -d / -f 1|xargs kill -9
+nohup java $JAVA_OPTS  -jar  -DconfigServerHost=10.20.1.202  -DconfigServerPort=8888  -Dspring.profiles.active=dev_new foredbinterface-0.0.1-SNAPSHOT.jar --port=5005 > /dev/null 2>&1 &
+--------------------------
+systemctl enable httpd
+systemctl disable httpd 
+systemctl kill httpd
+systemctl reboot # init 0 关机 init 6 启动
+
+systemctl status flanneld.service
+systemctl list-unit-files  --type=service  #列出所有服务（包括启用的和禁用的） /usr/lib/systemd/system/httpd.service
+
+
+---------------------------------------------------
+关闭SELinux
+/usr/sbin/sestatus -v   && getenforce 
+
+
+vim /etc/selinux/config  ->  SELINUX= 这一行为 enforcing、permissive 或 disabled 然后重启服务器
+
+2 临时方法
+setenforce 1   成为enforcing模式
+setenforce 0   成为permissive模式
+
+------------------------------------------------
+主机名 --/etc/hostname  手动修改/etc/hosts
+
+hostnamectl set-hostname m0
+vim /etc/hosts > 127.0.0.1 m0
+cat /etc/os-release  
+
+
+hostname
+hostnamectl status
+hostnamectl status [--static|--transient|--pretty]
+hostnamectl set-hostname <host-name>
+hostnamectl --static set-hostname <host-name>
+
+
+[root@localhost ~]# hostnamectl status
+   Static hostname: localhost.localdomain
+         Icon name: computer-vm
+           Chassis: vm
+        Machine ID: a91b4791725e4afda5195d59c2b178cf
+           Boot ID: 71c84991bf0443419fa09ab1e8c3ca47
+    Virtualization: microsoft
+  Operating System: CentOS Linux 7 (Core)
+       CPE OS Name: cpe:/o:centos:centos:7
+            Kernel: Linux 3.10.0-514.el7.x86_64
+      Architecture: x86-64
+[root@localhost ~]# 
+
+
+-----------------------------------------------
+服务
+https://linux.cn/article-5926-1.html
+https://wiki.archlinux.org/index.php/systemd_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)
+
+
+chkconfig --list
+service命令时，linux会去/etc/rc.d/init.d下去找这个脚本运行
+systemctl list-unit-files  && systemctl list-dependencies kubelet
+
+
+systemctl脚本存放在：/usr/lib/systemd/，有系统（system）和用户（user）之分，像需要开机不登陆就能运行的程序，/usr/lib/systemd/system目录下
+服务脚本按照上面编写完成后，以754的权限保存在/usr/lib/systemd/system目录下
+
+妈的还有。/etc/systemd/system/flanneld.service
+
+
+
+ps -aux | grep kubelet
+ps fax
+
+
+
+ systemctl --version
+ whereis systemd 
+ ps -eaf | grep [s]ystemd
+ systemd-analyze
+ systemd-analyze blame
+ systemctl list-unit-files
+ systemctl list-unit-files --type=service
+ systemctl list-units
+ systemctl --failed
+ systemctl is-enabled crond.service
+ systemctl status firewalld.service
+# systemctl start httpd.service
+# systemctl restart httpd.service
+# systemctl stop httpd.service
+# systemctl reload httpd.service
+# systemctl status httpd.service
+
+# systemctl is-active httpd.service
+# systemctl enable httpd.service
+# systemctl disable httpd.service
+
+systemctl mask httpd.service
+ln -s '/dev/null' '/etc/systemd/system/httpd.service'
+
+systemctl unmask httpd.service
+rm '/etc/systemd/system/httpd.service'
+
+systemctl kill httpd
+# systemctl status httpd
+
+
+systemctl list-unit-files --type=mount
+
+
+# systemctl start tmp.mount
+# systemctl stop tmp.mount
+# systemctl restart tmp.mount
+# systemctl reload tmp.mount
+# systemctl status tmp.mount
+
+
+journalctl -xe -u kubelet 
+journalctl -xe -u  kube-proxy
+journalctl --unit kube-proxy
+journalctl -xn 200 -u kubelet -l 
+journalctl -u kube-proxy -o export|grep MESSAGE
+
+
+----------------------------------------------------------
+增加虚拟内存 - swap
+free -m
+dd if=/dev/zero of=/swap.data bs=1M count=1024
+chmod 0600  /swap.data
+mkswap /swap.data
+swapon /swap.data
+
+vim /etc/fstab  增加-->  /swap.data swap swap defaults 0 0
+
+
+---------------------------------------------------------
+CentOS7.2搭建代理服务器
+
+yum install squid -y
+yum install httpd-tools -y
+
+mkdir /etc/squid3/
+# xiongneng 是用户名
+htpasswd -cd /etc/squid3/passwords xiongneng
+# 提示输入密码，在这里我设的密码为 123456
+# 注意密码不要超过8位
+
+
+/usr/lib64/squid/basic_ncsa_auth /etc/squid3/passwords
+# 输入 用户名 密码
+xiongneng 123456
+# 提示OK说明成功，ERR是有问题，请检查一下之前步骤
+OK
+# 测试完成，crtl + c 打断
+
+
+vim /etc/squid/squid.conf
+# 在最后添加
+auth_param basic program /usr/lib64/squid/basic_ncsa_auth /etc/squid3/passwords
+auth_param basic realm proxy
+acl authenticated proxy_auth REQUIRED
+http_access allow authenticated
+# 这里是端口号，可以按需修改
+# http_port 3128 这样写会同时监听ipv6和ipv4的端口，推荐适应下面的配置方法。
+http_port 0.0.0.0:3128
+http_access allow all
+forwarded_for delete
+
+request_header_access Via deny all
+request_header_access X-Forwarded-For deny all
+request_header_access From deny all
+
+
+重新加载配置文件： squid -k reconfigure
+
+2.上传文件出错的话
+ignore_expected_100 on
+
+
+# 开启启动
+systemctl enable squid.service
+# 启动
+systemctl start squid.service
+# 停止
+systemctl stop squid.service
+# 重启
+systemctl restart squid.service
+
+ firewall-cmd --zone=public --add-port=3128/tcp --permanent  &&  firewall-cmd --reload
+
+
+---------------------------------------------------------
+ 
+
+
+---------------------------------------------------------
+VPN
+http://www.eversea.com/blog/article_disp.asp?id=122
+service strongswan status
+ipsec.conf 
+
+
+---------------------------------------------------------
+
+CentOS 7 ʹ?????Ƶ?umԴ
+sudo yum -y install wget
+
+sudo cp /etc/yum.repos.d/CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo.bak    //?????????umԴ
+sudo wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo  //??aliyun??umԴ
+sudo wget -P /etc/yum.repos.d/ http://mirrors.aliyun.com/repo/epel-7.repo    //???PELԴ
+sudo yum clean all    && sudo yum makecache     //?????沢???µĻ???
+yum repolist
+---------------------------------------------------------
+shadowsocks??ss??  http://morning.work/page/2015-12/install-shadowsocks-on-centos-7.html
+curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+python get-pip.py
+pip install --upgrade pip
+pip install shadowsocks
+vim /etc/shadowsocks.json
+{
+  "server": "0.0.0.0",
+  "server_port": 8388,
+  "password": "uzon57jd0v869t7w",
+  "method": "aes-256-cfb"
+}
+vim /etc/systemd/system/shadowsocks.service
+[Unit]
+Description=Shadowsocks
+
+[Service]
+TimeoutStartSec=0
+ExecStart=/usr/bin/ssserver -c /etc/shadowsocks.json
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+systemctl enable shadowsocks
+systemctl start shadowsocks
+systemctl status shadowsocks -l
+
+---------------------
+һ????װ
+bash <(curl -s http://morning.work/examples/2015-12/install-shadowsocks.sh)
+
+Congratulations! Shadowsocks has been installed on your system.
+You shadowsocks connection info:
+--------------------------------
+server:      10.0.2.15
+server_port: 8388
+password:    RaskAAcW0IQrVcA7n0QLCEphhng7K4Yc
+method:      aes-256-cfb
+--------------------------------
+
+socks5代理
+http://blog.csdn.net/Vincent95/article/details/71172986
+
+
+---------------------------------------------------------
+
+权限
+
+
+一般是三个数字：
+第一个数字表示文件所有者的权限
+第二个数字表示与文件所有者同属一个用户组的其他用户的权限
+第三个数字表示其它用户组的权限。
+权限分为三种：读（r=4），写（w=2），执行（x=1） 。 综合起来还有可读可执行（rx=5=4+1）、可读可写（rw=6=4+2）、可读可写可执行(rwx=7=4+2+1)。
+所以，chmod 755 设置用户的权限为：
+1.文件所有者可读可写可执行                                   --7
+2.与文件所有者同属一个用户组的其他用户可读可执行 --5 
+3.其它用户组可读可执行                                       --5

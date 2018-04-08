@@ -1,0 +1,3 @@
+cnpm install jquery --save-dev
+npm i bootstrap url url-loader style-loader css-loader --save
+npm install element-ui -S

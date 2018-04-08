@@ -1,0 +1,5 @@
+netstat -ano | findstr 8080
+tasklist|findstr 8712
+
+TASKKILL /PID 8712   /T
+taskkill /f /t /im /java.exe

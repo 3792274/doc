@@ -1,0 +1,72 @@
+﻿http://blog.csdn.net/jamenew/article/details/54864472
+http://2358205.blog.51cto.com/2348205/961336
+
+http://www.cnblogs.com/wjoyxt/p/5702406.html
+
+
+
+中文
+https://github.com/SonarQubeCommunity/sonar-l10n-zh
+
+
+wget http://repo1.maven.org/maven2/org/codehaus/sonar/runner/sonar-runner-dist/2.4/sonar-runner-dist-2.4.zip
+wget https://sonarsource.bintray.com/Distribution/sonarqube/sonarqube-6.4.zip
+
+yum –y install unzip
+unzip sonarqube-6.4.zip
+
+mv sonarqube-6.4 /usr/local/
+vim /usr/local/sonarqube-6.4/conf/sonar.properties  --》sonar.web.port=80
+
+cd /usr/local/sonarqube-6.4/bin/linux-x86-64
+./sonar.sh start   #启动服务(其它操作： ./sonar.sh stop    停止服务   ./sonar.sh restart 重启服务
+
+
+cd /usr/local/sonarqube-6.4/extensions/plugins/
+wget -c http://repo1.maven.org/maven2/org/codehaus/sonar-plugins/l10n/sonar-l10n-zh-plugin/1.8/sonar-l10n-zh-plugin-1.8.jar
+
+/usr/local/sonarqube-6.4/bin/linux-x86-64/sonar.sh restart
+
+
+添加防火墙
+firewall-cmd --zone=public --add-port=9000/tcp --permanent
+firewall-cmd --reload
+
+
+
+vim /etc/init.d/sonar
+新建文件并增加如下内容：
+#!/bin/sh 
+# 
+# rc file for SonarQube 
+# 
+# chkconfig: 345 96 10 
+# description: SonarQube system (www.sonarsource.org) 
+# 
+### BEGIN INIT INFO 
+# Provides: sonar 
+# Required-Start: $network 
+# Required-Stop: $network 
+# Default-Start: 3 4 5 
+# Default-Stop: 0 1 2 6 
+# Short-Description: SonarQube system (www.sonarsource.org) 
+# Description: SonarQube system (www.sonarsource.org) 
+### END INIT INFO
+/usr/bin/sonar $*
+添加启动服务
+ln -s /usr/local/sonarqube-6.4/bin/linux-x86-64/sonar.sh  /usr/bin/sonar
+chmod 755 /etc/init.d/sonar
+chkconfig --add sonar
+chkconfig sonar on
+chkconfig start
+
+
+
+
+
+为sonar创建数据库及用户账号密码
+CREATE DATABASE sonar CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE USER 'sonar' IDENTIFIED BY 'sonar';
+GRANT ALL ON sonar.* TO 'sonar'@'%' IDENTIFIED BY 'sonar';
+GRANT ALL ON sonar.* TO 'sonar'@'localhost' IDENTIFIED BY 'sonar';
+FLUSH PRIVILEGES;

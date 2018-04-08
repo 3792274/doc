@@ -1,0 +1,74 @@
+https://hub.docker.com/r/library/mongo/
+http://dockone.io/article/181  --集群
+Windows 或 Mac 上無法使用 -v /some_path/:/data/db 這個參數
+
+
+docker pull   10.20.1.240/mongo/mongo:3.4.8
+docker run -d --name piggymetrics -p 27017:27017  -v D:/MyMongoDB:/tt   10.20.1.240/mongo/mongo:piggymetrics --auth
+
+
+
+mymongodb
+
+
+
+验证安装
+docker run -d --name mongodb_3.4 -p 27017:27017   10.20.1.240/mongo/mongo:3.4.8 --auth
+docker exec -it mongodb_3.4 /bin/bash  mongo && use admin && show users && show collections 或者
+docker exec -it mongodb_3.4 mongo admin
+
+添加管理员
+use admin
+db.createUser({user:"admin",pwd:"12369",roles:["root"]})
+db.auth("admin", "12369")
+db.getCollectionNames()
+
+添加数据库用户
+use piggymetrics
+db.createUser({user: "user", pwd: "12369", roles: [{ role: "dbOwner", db: "piggymetrics" }]})
+use admin
+db.system.users.find()
+
+
+mongo piggymetrics -u user -p 12369 /tt/account-service-dump.js
+
+
+> db.createUser({ user: 'admin', pwd: '12369', roles: [ { role: "userAdminAnyDatabase", db: "admin" } ] });
+> db.getName();
+> db.system.users.find()
+> db.shutdownServer()  || kill -2 pid 
+> db.auth("admin","12369")
+> use admin
+> show collections
+> db.system.users.find()
+mongo -u admin -p 12369 --authenticationDatabase admin
+
+
+use mydb
+db.createUser(
+ {
+   user: "admin",
+   pwd: "12369",
+   roles: [
+      { role: "readWrite", db: "mydb" },
+      { role: "readWrite", db: "admin" }
+   ]
+ }
+)
+
+
+docker run -it --rm --link some-mongo:mongo mongo mongo -u admin -p 12369 --authenticationDatabase admin some-mongo/some-db
+docker run -d --name mongodb_web_336 --link mongodb_3.4:mongo -p 8081:8081  mongo-express
+
+
+挂在文件系统
+docker run -d --name mongodb_3.4 -p 27017:27017 -v /my/own/datadir:/data/db   10.20.1.240/mongo/mongo:3.4.8 --auth
+ chcon -Rt svirt_sandbox_file_t /my/own/datadir【SELinux】
+
+
+--------------------------------------
+
+docker pull mongo:3
+docker tag d4f259423416 10.20.1.240/mongo/mongo:3
+docker push 10.20.1.240/redis/mongo:3
+docker rmi  10.20.1.240/redis/mongo:3

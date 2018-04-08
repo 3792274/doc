@@ -1,0 +1,17 @@
+mongod.exe --dbpath C:\mongoDB\db
+
+将MongoDB服务器作为Windows服务运行
+
+
+mongod.exe   --dbpath "C:\mongoDB\db"  --serviceName "MongoDB" --serviceDisplayName "MongoDB Service" --logpath "C:\mongoDB\log\mongodb.log" --logappend  --install
+
+mongod.exe --bind_ip 127.0.0.1 --dbpath "C:\mongoDB\db" --port 3307 --serviceName "MongoDB" --serviceDisplayName "MongoDB Service" --install
+
+
+----------------------------------------
+
+> db.runoob.insert({x:10})
+WriteResult({ "nInserted" : 1 })
+> db.runoob.find()
+{ "_id" : ObjectId("5604ff74a274a611b0c990aa"), "x" : 10 }
+>
