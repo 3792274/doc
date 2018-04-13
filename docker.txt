@@ -1,4 +1,4 @@
-﻿https://www.docker-cn.com/what-docker
+https://www.docker-cn.com/what-docker
 
 
 https://store.docker.com/editions/community/docker-ce-server-centos
@@ -247,3 +247,8 @@ image 导入 导出
 4.容器的导入 docker import tomcat80824.tar  &&  docker images  && docker tag 880f tomcat80824:1.0 &&  docker images  
 
 -----------------------------------------
+
+Docker kill $(Docker ps -aq)杀死所有的Docker进程，
+Docker history mysql
+Docker ps -a | grep "Exited" | awk '{print $1 }'| xargs Docker rm 删除exited的容器。
+Docker rmi $(Docker images | awk '/^<none>/ {print $3}') 删除tag为NONE的容器。

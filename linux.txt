@@ -255,6 +255,10 @@ service iptables restart
  yum install -y conntrack-tools
 
 -----------------
+清空源
+yum clean all &&  yum makecache 
+
+-----------------------
 
 
 
@@ -710,3 +714,37 @@ http://blog.csdn.net/Vincent95/article/details/71172986
 1.文件所有者可读可写可执行                                   --7
 2.与文件所有者同属一个用户组的其他用户可读可执行 --5 
 3.其它用户组可读可执行                                       --5
+
+
+---------------------------------------------------------
+CentOS修改ulimit（最大进程数和最大文件打开数)
+ulimit -a
+ 
+echo -ne "
+* soft nproc  unlimited
+* hard nproc  unlimited
+* soft nofile 65536
+* hard nofile 65536
+" >>/etc/security/limits.conf
+
+vim /etc/pam.d/login 增加：
+session    required     pam_limits.so 
+
+重启
+
+-------------------------------------------------------
+ab  和 siege 压测工具
+yum install httpd-tools -y
+ab  -c 299  -n 1000  -p post_data.json -T 'application/json' http://10.20.1.1:8081/respPayWeb/YIHUIFU_BANK_WEBWAPAPP_WX_SM/
+
+
+
+(wget https://codeload.github.com/JoeDog/siege/zip/v4.0.4 && yum install -y unzip && unzip v4.0.4)
+wget http://download.joedog.org/siege/siege-latest.tar.gz  
+tar zxf siege-latest.tar.gz
+cd siege-4.0.4/  && ./configure && make && make install
+
+//并发人数为10，重复5次，每次请求间隔3秒
+siege -c 10 -r 5  -d 3 'http://10.20.1.1:8081/respPayWeb/YIHUIFU_BANK_WEBWAPAPP_WX_SM/  POST <./post_data.json'
+
+-------------------------------------------------------

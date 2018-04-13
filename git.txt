@@ -167,3 +167,10 @@ git push origin –tags # 将本地所有标签一次性提交到git服务器
 
 	
 git push origin --delete tag <tagname>  //删除远程tag
+
+---------------------------------------------------------------------
+分支，追踪
+git branch --track experimental origin/experimental
+git pull experimental
+
+---------------------------------------------------------------------
