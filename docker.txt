@@ -160,48 +160,7 @@ docker run -i -t --rm  -p 10241:9090 pay-core/pay  --logging.level.dc.pay=INFO  
 2.docker run --name <name> ：：
  .... 
 
-
-
-
-----------------------------------------
-docker jenkins-/usr/share/jenkins/jenkins.war
-https://hub.docker.com/r/jenkins/jenkins/  -->docker pull jenkins/jenkins:lts
-
-
-iptables -t filter -N DOCKER
-iptables -t nat -N DOCKER
-chcon -Rt svirt_sandbox_file_t /jenkins
-
-docker run --name jenkins  -d -u root -P -v /jenkins:/var/jenkins_home jenkins/jenkins:lts   --env JAVA_OPTS=-Dhudson.footerURL=http://mycompany.com
-docker logs jenkins  
-docker exec -it jenkins  bash 
-cat /var/jenkins_home/secrets/initialAdminPassword
-
-
-设置 jenkins 时间 -->vi /usr/local/bin/jenkins.sh ->开头添加
-/bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo 'Asia/Shanghai'>/etc/timezone
-
-
-docker run --name jenkins -d -p 8080:8080 -p 50000:50000  jenkins/jenkins:lts
-scp -R /var/Jenkins_home root@10.20.1.10:/home/myJenkins
-
--------------------------------------
-docker sonarqube
-https://hub.docker.com/_/sonarqube/
-docker run -d --name sonarqube -p 9000:9000 -p 9092:9092 sonarqube
-mvn sonar:sonar
-
-docker run -d --name sonarqube -p 9000:9000 -p 9092:9092  --link pay-mysql:pay-mysql-db -e SONARQUBE_JDBC_USERNAME=root -e SONARQUBE_JDBC_PASSWORD=12369 -e SONARQUBE_JDBC_URL=jdbc:mysql://pay-mysql-db:3306/sonar?useUnicode=true^&characterEncoding=utf8^&rewriteBatchedStatements=true sonarqube
-docker exec -it  sonarqube bash
-下载中文：https://github.com/SonarQubeCommunity/sonar-l10n-zh  ==>  sonar-l10n-zh-plugin-1.16.jar    ==>  /opt/sonarqube/extensions/plugins
-
------Installing and Configuring SonarQube Runner
-https://docs.sonarqube.org/display/SONARQUBE51/Installing+and+Configuring+SonarQube+Runner
-
  
------centos
-docker run -d --name sonarqube -p 56789:9000 -p 56790:9092   -e SONARQUBE_JDBC_USERNAME=root -e SONARQUBE_JDBC_PASSWORD=12369 -e SONARQUBE_JDBC_URL=jdbc:mysql://10.20.1.201:3301/sonar?useUnicode=true\&characterEncoding=utf8\&rewriteBatchedStatements=true  sonarqube  
-
 
 -------------------------------------
 关闭防火墙：
