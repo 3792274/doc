@@ -1,0 +1,40 @@
+https://hub.docker.com/r/stilliard/pure-ftpd/
+http://tlightsky.github.io/ftp/docker/pure-ftp/2016/01/16/how-to-setup-ftp-by-docker.html
+
+
+1.创建文件夹 新建用户组
+mkdir -p /opt/ftp  && vim /opt/ftp/docker-compose.yml
+groupadd -g 600  ftpuser &&  useradd -u 500 -g 600  ftpuser &&  passwd  ftpuser 
+
+ftp:
+  image: stilliard/pure-ftpd:hardened
+  container_name: ftp
+  volumes:
+    - "/opt/nginx/www:/home/ftpusers/www"
+    - "/opt/ftp/passwd:/etc/pure-ftpd/passwd"
+    - "/opt/ftp/log:/var/log/pure-ftpd"
+  ports:
+    - "21:21"
+    - "30000:30000"
+    - "30001:30001"
+    - "30002:30002"
+    - "30003:30003"
+    - "30004:30004"
+    - "30005:30005"
+    - "30006:30006"
+    - "30007:30007"
+    - "30008:30008"
+    - "30009:30009"
+  environment:
+    PUBLICHOST: 172.28.240.38
+    ADDED_FLAGS: -d -d  -O w3c:/var/log/pure-ftpd/transfer.log
+
+
+
+2.启动 
+cd /opt/ftp/   &&  docker-compose down  &&    docker-compose up -d
+
+3.新建用户
+docker exec -it ftp bash
+pure-pw useradd www -f /etc/pure-ftpd/passwd/pureftpd.passwd -m -u ftpuser  -d /home/ftpusers/www/
+pure-pw passwd www -f /etc/pure-ftpd/passwd/pureftpd.passwd -m
