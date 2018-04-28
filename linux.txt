@@ -684,7 +684,7 @@ systemctl start shadowsocks
 systemctl status shadowsocks -l
 
 ---------------------
-һ????װ
+快捷安装
 bash <(curl -s http://morning.work/examples/2015-12/install-shadowsocks.sh)
 
 Congratulations! Shadowsocks has been installed on your system.
@@ -694,6 +694,15 @@ server:      10.0.2.15
 server_port: 8388
 password:    RaskAAcW0IQrVcA7n0QLCEphhng7K4Yc
 method:      aes-256-cfb
+
+[Service]
+TimeoutStartSec=0
+ExecStart=/usr/bin/ssserver -c /etc/shadowsocks.json
+Created symlink from /etc/systemd/system/multi-user.target.wants/shadowsocks.service to /etc/systemd/system/shadowsocks.service.
+  
+ 
+
+
 --------------------------------
 
 socks5代理
