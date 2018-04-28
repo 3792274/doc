@@ -72,9 +72,9 @@ init_connect                    ='SET NAMES utf8mb4'
 innodb_buffer_pool_size         = 128M
 innodb_log_file_size            = 128M
 innodb_file_per_table           = 1
-key_buffer_size                 = 16M
-tmp_table_size                  = 134217728       #内部内存临时表的最大值 ，设置成128M。
-max_heap_table_size             = 134217728
+key_buffer_size                 = 128M
+tmp_table_size                  = 512M       #内部内存临时表的最大值 ，设置成128M。
+max_heap_table_size             = 512M
 query_cache_type                = 0               #禁用mysql的缓存查询结果集功能
 query_cache_size                = 0
 max_allowed_packet              = 128M            #SQL数据包发送的大小，如果有BLOB对象建议修改成1G
@@ -305,9 +305,9 @@ init_connect                    ='SET NAMES utf8mb4'
 innodb_buffer_pool_size         = 128M
 innodb_log_file_size            = 128M
 innodb_file_per_table           = 1
-key_buffer_size                 = 16M
-tmp_table_size                  = 134217728       #内部内存临时表的最大值 ，设置成128M。
-max_heap_table_size             = 134217728
+key_buffer_size                 = 128M
+tmp_table_size                  = 512M       #内部内存临时表的最大值 ，设置成128M。
+max_heap_table_size             = 512M
 query_cache_type                = 0               #禁用mysql的缓存查询结果集功能
 query_cache_size                = 0
 max_allowed_packet              = 128M            #SQL数据包发送的大小，如果有BLOB对象建议修改成1G
@@ -450,9 +450,9 @@ init_connect                    ='SET NAMES utf8mb4'
 innodb_buffer_pool_size         = 128M
 innodb_log_file_size            = 128M
 innodb_file_per_table           = 1
-key_buffer_size                 = 16M
-tmp_table_size                  = 134217728       #内部内存临时表的最大值 ，设置成128M。
-max_heap_table_size             = 134217728
+key_buffer_size                 = 128M
+tmp_table_size                  = 512M       #内部内存临时表的最大值 ，设置成128M。
+max_heap_table_size             = 512M
 query_cache_type                = 0               #禁用mysql的缓存查询结果集功能
 query_cache_size                = 0
 max_allowed_packet              = 128M            #SQL数据包发送的大小，如果有BLOB对象建议修改成1G
@@ -741,3 +741,17 @@ mysql>UNLOCK  TABLES;
 # mysql -uroot -p  </tmp/all_db.sql 
 
 -----------------------------------------
+表容量过大(The table is full )
+SHOW TABLE STATUS
+
+解决方法1： 
+执行ALTER TABLE res_pay_list MAX_ROWS=1000000000; 
+
+解决方法2： 
+修改Mysql的配置文件/etc/my.cnf，在[mysqld]下添加/修改两行(下面的值仅供参考,请根据实际情况酌情处理)： 
+tmp_table_size = 256M // 临时表大小 
+max_heap_table_size = 256M // 内存表大小 
+
+系统默认是16M，别忘记重新启动mysql。 
+
+ 

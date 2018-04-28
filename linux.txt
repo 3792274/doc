@@ -744,7 +744,7 @@ session    required     pam_limits.so
 -------------------------------------------------------
 ab  和 siege 压测工具
 yum install httpd-tools -y
-ab  -c 299  -n 1000  -p post_data.json -T 'application/json' http://10.20.1.1:8081/respPayWeb/YIHUIFU_BANK_WEBWAPAPP_WX_SM/
+ab  -c 299  -n 1000  -p post_data.json -T 'application/json' http://10.20.1.1:8081/respPayWeb/SHANGYINXIN_BANK_WEB_WY_JSYH/
 
 
 
@@ -754,6 +754,16 @@ tar zxf siege-latest.tar.gz
 cd siege-4.0.4/  && ./configure && make && make install
 
 //并发人数为10，重复5次，每次请求间隔3秒
-siege -c 10 -r 5  -d 3 'http://10.20.1.1:8081/respPayWeb/YIHUIFU_BANK_WEBWAPAPP_WX_SM/  POST <./post_data.json'
+siege -c 10 -r 5  -d 3 'http://10.20.1.1:8081/respPayWeb/SHANGYINXIN_BANK_WEB_WY_JSYH/  POST <./post_data.json'
 
 -------------------------------------------------------
+环境变量
+普通用户
+vim ~/.bash.profile
+export CLASSPATH=./JAVA_HOME/lib;$JAVA_HOME/jre/lib
+source ~/.bash_profile
+
+全部用户
+vim /etc/profile    
+export CLASSPATH=./JAVA_HOME/lib;$JAVA_HOME/jre/lib
+source /etc/profile

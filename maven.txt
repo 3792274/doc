@@ -40,3 +40,12 @@ mvn clean package docker:build -DpushImageTag
             <!-- 删除镜像：       mvn -Ddocker.removeAll docker:remove  -->  
             <!-- 查看镜像日志：    mvn docker:logs -->  
             <!-- 镜像启动成功后，访问地址为： http://192.168.1.70:8881/ams-server -->  
+
+--------------------------------
+新版安装
+mkdir -p /opt/APP && cd /opt/APP/ && wget http://mirror.metrocast.net/apache/maven/maven-3/3.5.3/binaries/apache-maven-3.5.3-bin.zip && unzip apache-maven-3.5.3-bin.zip && rm -rf apache-maven-3.5.3-bin.zip 
+
+vim /etc/profile 
+export M2_HOME=/opt/APP/apache-maven-3.5.3
+export PATH=$PATH:$M2_HOME/bin
+source  /etc/profile

@@ -1,0 +1,66 @@
+-------------------------------------
+docker sonarqube
+https://hub.docker.com/_/sonarqube/
+
+
+
+docker run -d --name sonarqube -p 9000:9000 -p 9092:9092 sonarqube
+mvn sonar:sonar
+
+
+==================启动慢===========================
+
+
+---没有mysql容器
+docker run -d --name sonarqube -p 9000:9000 -p 9092:9092   -e SONARQUBE_JDBC_USERNAME=root -e SONARQUBE_JDBC_PASSWORD=12369 -e SONARQUBE_JDBC_URL='jdbc:mysql://10.20.1.10:3306/sonar?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&useSSL=false' sonarqube
+
+
+---有mysql容器
+docker run -d --name sonarqube -p 9000:9000 -p 9092:9092  --link mysql3306:mysql3306-db -e SONARQUBE_JDBC_USERNAME=root -e SONARQUBE_JDBC_PASSWORD=12369 -e SONARQUBE_JDBC_URL='jdbc:mysql://mysql3306-db:3306/sonar?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&useSSL=false' sonarqube
+
+
+--------------------------------------
+Chinese Pack 插件  
+Checkstyle 插件
+Findbugs  插件
+---------------------------------------
+
+
+----安装中文（可在后台安装）
+docker exec -it  sonarqube bash
+下载中文：https://github.com/SonarQubeCommunity/sonar-l10n-zh  ==>  sonar-l10n-zh-plugin-1.16.jar    ==>  /opt/sonarqube/extensions/plugins
+cd  /opt/sonarqube/extensions/plugins && su  sonarqube 
+wget https://github.com/SonarQubeCommunity/sonar-l10n-zh/releases/download/sonar-l10n-zh-plugin-1.20/sonar-l10n-zh-plugin-1.20.jar
+
+
+
+
+两种命令行工具
+
+-----Installing and Configuring SonarQube Runner
+https://docs.sonarqube.org/display/SONARQUBE51/Installing+and+Configuring+SonarQube+Runner
+mkdir -p /opt/APP && cd /opt/APP &&
+wget http://repo1.maven.org/maven2/org/codehaus/sonar/runner/sonar-runner-dist/2.4/sonar-runner-dist-2.4.zip && unzip  sonar-runner-dist-2.4.zip && rm -rf sonar-runner-dist-2.4.zip
+vim /opt/APP/sonar-runner-2.4/conf/sonar-runner.properties  -->配置
+vim /etc/profile 
+export SONAR_RUNNER_HOME=/opt/APP/sonar-runner-2.4/
+export PATH=$PATH:$SONAR_RUNNER_HOME/bin
+source  /etc/profile
+# sonar-runner -h
+
+ 
+
+
+----- Analyzing with SonarQube Scanner（SONAR_SCANNER_OPTS="-Xmx512m"）
+https://docs.sonarqube.org/display/SCAN/Analyzing%20with%20SonarQube%20Scanner
+mkdir -p /opt/APP && cd /opt/APP &&
+wget  https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.1.0.1141-linux.zip  && unzip sonar-scanner-cli-3.1.0.1141-linux.zip && rm -rf sonar-scanner-cli-3.1.0.1141-linux.zip
+vim /opt/APP/sonar-scanner-3.1.0.1141-linux/conf/sonar-scanner.properties  -->配置
+vim /etc/profile 
+export SONAR_SCANNER_HOME=/opt/APP/sonar-scanner-3.1.0.1141-linux
+export PATH=$PATH:$SONAR_SCANNER_HOME/bin
+source  /etc/profile
+# sonar-scanner -h
+
+
+-------或者使用 mvn sonar:sonar（Maven 的 settings.xml ）
