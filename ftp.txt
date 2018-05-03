@@ -4,11 +4,13 @@ http://tlightsky.github.io/ftp/docker/pure-ftp/2016/01/16/how-to-setup-ftp-by-do
 
 1.创建文件夹 新建用户组
 mkdir -p /opt/ftp  && vim /opt/ftp/docker-compose.yml
-groupadd -g 600  ftpuser &&  useradd -u 500 -g 600  ftpuser &&  passwd  ftpuser 
+ #groupadd -g 1000  ftpuser &&  useradd -u 1000 -g 1000  ftpuser &&  passwd  ftpuser 
+ #chown -R  1000:1000 /opt/nginx/www
 
 ftp:
   image: stilliard/pure-ftpd:hardened
   container_name: ftp
+  privileged: true
   volumes:
     - "/opt/nginx/www:/home/ftpusers/www"
     - "/opt/ftp/passwd:/etc/pure-ftpd/passwd"
@@ -34,7 +36,10 @@ ftp:
 2.启动 
 cd /opt/ftp/   &&  docker-compose down  &&    docker-compose up -d
 
-3.新建用户
+3.新建用户 (chmod 777 /opt/nginx/www)
 docker exec -it ftp bash
-pure-pw useradd www -f /etc/pure-ftpd/passwd/pureftpd.passwd -m -u ftpuser  -d /home/ftpusers/www/
+pure-pw useradd www -f /etc/pure-ftpd/passwd/pureftpd.passwd -m -u 1000 -g 1000  -d /home/ftpusers/www/
 pure-pw passwd www -f /etc/pure-ftpd/passwd/pureftpd.passwd -m
+
+
+ 

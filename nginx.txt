@@ -1,7 +1,9 @@
 nginx 反代
-
 https://nginx.org/
 https://hub.docker.com/_/nginx/
+
+配置教程
+https://windard.com/project/2016/11/13/About-Nginx
 
 
 openresty
@@ -13,32 +15,23 @@ https://hub.docker.com/search/?isAutomated=0&isOfficial=0&page=1&pullCount=0&q=o
 Tengine
 http://tengine.taobao.org/index_cn.html
 
-
-
-
+ ======================================================================================================================================
 
 1.创建目录
 mkdir -p /opt/nginx/conf/ && mkdir -p /opt/nginx/conf/conf.d  && mkdir -p /opt/nginx/www  && mkdir -p  /opt/nginx/log/ 
-
-<<<<<<< HEAD
-mkdir -p /opt/nginx/conf/ && mkdir -p /opt/nginx/www  && mkdir -p  /opt/nginx/log/
-docker run  -d  -p 80:80  -p 81:81 --name nginx -v /opt/nginx/conf/nginx.conf:/etc/nginx/nginx.conf:rw   -v /opt/nginx/www:/usr/share/nginx/html:rw -v /opt/nginx/log/:/var/log/nginx/:rw   nginx:1.13.5
-
-=======
+ 
 3.docker运行
-docker run  -d   -p 81:80 --name nginx -v /opt/nginx/conf/nginx.conf:/etc/nginx/nginx.conf:rw   -v /opt/nginx/www:/usr/share/nginx/html:rw -v /opt/nginx/log/:/var/log/nginx/:rw   nginx:1.13.5
->>>>>>> be33e0dedae0189c67be5302e5a7eaa559adb88b
+docker run  -d  -p 9002:9001 -p 81:80   --name nginx -v /opt/nginx/conf/nginx.conf:/etc/nginx/nginx.conf  -v /opt/nginx/conf/conf.d:/etc/nginx/conf.d  -v /opt/nginx/www:/usr/share/nginx/html -v /opt/nginx/log/:/var/log/nginx/   nginx:1.13.5
+ 
 
-2.配置文件
+2.配置文件(主)
 vim /opt/nginx/conf/nginx.conf
-
 ---------------------------------------------------------------------------------
 user  nginx;
 worker_processes  2;
 
 error_log  /var/log/nginx/error.log warn;
 pid        /var/run/nginx.pid;
-
 
 events {
     worker_connections  1024;
@@ -48,76 +41,83 @@ events {
 http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
-
     log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
                       '$status $body_bytes_sent "$http_referer" '
                       '"$http_user_agent" "$http_x_forwarded_for"';
-
-    access_log  /var/log/nginx/access.log  main;
-
-    sendfile        on;
-    #tcp_nopush     on;
-
+    access_log  /var/log/nginx/access.log  main;                      
+    sendfile           on;
+    #tcp_nopush        on;
     keepalive_timeout  65;
+    #gzip              on;
 
-    #gzip  on;
- 
-
-    server {
+   server {
         listen       80;
-        server_name  localhost;
-
-        #charset koi8-r;
-        #access_log  /var/log/nginx/host.access.log  main;
-
-        location / {
-            root   /usr/share/nginx/html;
-            index  index.html index.htm;
-            autoindex on; #显示目录浏览
-            autoindex_localtime on; #之类的参数写这里
-        }
-
-        #error_page  404              /404.html;
-
-        # redirect server error pages to the static page /50x.html
-        #
+        access_log  /var/log/nginx/80.access.log  main;
         error_page   500 502 503 504  /50x.html;
+        #server_name  localhost;
+        #charset koi8-r;
+        location / {
+                root   /usr/share/nginx/html;
+                index  index.html index.htm;
+                autoindex on; #显示目录浏览
+                autoindex_localtime on; #之类的参数写这里
+                charset utf-8,gbk;
+        }
+        location /nginx_status {
+                stub_status on;
+                access_log off;
+                allow 127.0.0.1;
+                allow 10.20.11.160;
+                allow 10.20.1.1;
+                deny all;
+        }
         location = /50x.html {
             root   /usr/share/nginx/html;
         }
-
-        # proxy the PHP scripts to Apache listening on 127.0.0.1:80
-        #
-        #location ~ \.php$ {
-        #    proxy_pass   http://127.0.0.1;
-        #}
-
-        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-        #
-        #location ~ \.php$ {
-        #    root           html;
-        #    fastcgi_pass   127.0.0.1:9000;
-        #    fastcgi_index  index.php;
-        #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
-        #    include        fastcgi_params;
-        #}
-
-        # deny access to .htaccess files, if Apache's document root
-        # concurs with nginx's one
-        #
-        #location ~ /\.ht {
-        #    deny  all;
-        #}
     }
- 
     include /etc/nginx/conf.d/*.conf;
 }
 
+---------------------------------------
+3.配置文件(辅)
+vim /opt/nginx/conf/conf.d/default.conf
 
+upstream sonarQube{
+    #ip_hash;
+    server  10.20.1.10:9000 max_fails=30 fail_timeout=65s;
+}
+  
+  
+ server {
+        listen  *:9001 default_server;
+        server_name  localhost;
+        index index.html;
+        autoindex on;
+        ssi  on;
+        limit_rate 2000k;
+        client_max_body_size 2048m;
+        location / {
+                proxy_pass http://sonarQube;
+                proxy_redirect     http://$host/ /;
+                proxy_cookie_path  /  /;
+                proxy_set_header    Host $host:$server_port;
+                proxy_set_header    Cookie $http_cookie; 
+                proxy_set_header    X-Real-IP $remote_addr;
+                proxy_set_header    REMOTE-HOST $remote_addr;
+                proxy_set_header    X-Forwarded-Host $host:$server_port;
+                proxy_set_header    X-Forwarded-Server $host:$server_port;
+                proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
+        
+  }
+
+ 
+
+firewall-cmd --permanent --zone=public --add-port=9002/tcp && firewall-cmd --reload
 
 
  最后，重新加载nginx的配置即可。
- nginx -s reload
+ docker  exec  nginx nginx -s reload     (nginx -s reload)
 
 
 
